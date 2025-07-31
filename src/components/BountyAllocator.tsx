@@ -65,11 +65,10 @@ const BountyAllocator = () => {
       
       // Fetch all replies
       const replies = await nostrService.fetchThreadReplies(noteId);
-      setReplyCount(replies.length);
-      
       if (replies.length === 0) {
-        throw new Error('No replies found for this thread. Try a thread with more discussion or engagement.');
+        throw new Error('No replies found for this thread. This could be due to relay issues or a thread with no engagement.');
       }
+      setReplyCount(replies.length);
 
       setLoadingStatus(`Found ${replies.length} replies. AI is analyzing the conversation...`);
       
