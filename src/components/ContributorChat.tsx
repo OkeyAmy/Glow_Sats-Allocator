@@ -160,8 +160,8 @@ const ContributorChat: React.FC<ContributorChatProps> = ({
                   <div className="p-4 rounded-lg bg-primary/10">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse pulse-delay-1"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse pulse-delay-2"></div>
                       <span className="text-sm text-muted-foreground ml-2">AI is thinking...</span>
                     </div>
                   </div>
