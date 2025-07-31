@@ -5,6 +5,7 @@ import InputForm from './InputForm';
 import LoadingScreen from './LoadingScreen';
 import RecommendationScreen from './RecommendationScreen';
 import SuccessScreen from './SuccessScreen';
+import FaultyTerminal from './FaultyTerminal';
 import { nostrService } from '@/services/nostrService';
 import { GeminiService, type Contributor } from '@/services/geminiService';
 
@@ -182,12 +183,34 @@ Powered by AI Tip & Bounty Allocator ⚡`;
   };
 
   return (
-    <div className="min-h-screen p-6 flex items-center justify-center">
-      <ApiKeyModal 
-        isOpen={showApiModal} 
-        onSave={handleApiKeySave} 
+    <div className="min-h-screen relative">
+      <FaultyTerminal
+        scale={1.5}
+        gridMul={[2, 1]}
+        digitSize={1.2}
+        timeScale={0.5}
+        pause={false}
+        scanlineIntensity={0.8}
+        glitchAmount={0.7}
+        flickerAmount={0.5}
+        noiseAmp={0.3}
+        chromaticAberration={0}
+        dither={0}
+        curvature={0.1}
+        tint="#ffffff"
+        mouseReact={true}
+        mouseStrength={0.3}
+        pageLoadAnimation={false}
+        brightness={0.4}
+        className="fixed inset-0"
       />
-      {renderCurrentScreen()}
+      <div className="relative z-10 min-h-screen p-6 flex items-center justify-center">
+        <ApiKeyModal 
+          isOpen={showApiModal} 
+          onSave={handleApiKeySave} 
+        />
+        {renderCurrentScreen()}
+      </div>
     </div>
   );
 };
