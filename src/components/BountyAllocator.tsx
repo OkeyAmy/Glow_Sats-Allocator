@@ -18,6 +18,8 @@ const BountyAllocator = () => {
   const [loadingStatus, setLoadingStatus] = useState('');
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [totalBounty, setTotalBounty] = useState(0);
+  const [originalNote, setOriginalNote] = useState<any>(null);
+  const [replyCount, setReplyCount] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const BountyAllocator = () => {
     });
   };
 
-  const handleAnalyze = async (noteId: string, bountyAmount: number) => {
+  const handleAnalyze = async (noteId: string, bountyAmount: number, customDistribution?: number) => {
     if (!apiKey) {
       setShowApiModal(true);
       return;
@@ -58,10 +60,12 @@ const BountyAllocator = () => {
         throw new Error('Could not find the original note');
       }
 
+      setOriginalNote(originalNote);
       setLoadingStatus('Fetching thread replies...');
       
       // Fetch all replies
       const replies = await nostrService.fetchThreadReplies(noteId);
+      setReplyCount(replies.length);
       
       if (replies.length === 0) {
         throw new Error('No replies found for this thread. Try a thread with more discussion or engagement.');
@@ -74,7 +78,11 @@ const BountyAllocator = () => {
       
       // Analyze with Gemini
       const geminiService = new GeminiService(apiKey);
-      const analysis = await geminiService.analyzeThread(threadContent, bountyAmount);
+      const analysis = await geminiService.analyzeThread(
+        threadContent, 
+        bountyAmount, 
+        customDistribution
+      );
       
       if (analysis.contributors.length === 0) {
         throw new Error('No valuable contributions found in this thread');
@@ -166,6 +174,8 @@ Powered by AI Tip & Bounty Allocator ⚡`;
           <RecommendationScreen
             contributors={contributors}
             totalBounty={totalBounty}
+            originalNote={originalNote}
+            replyCount={replyCount}
             onProceed={handleProceedToPayment}
           />
         );

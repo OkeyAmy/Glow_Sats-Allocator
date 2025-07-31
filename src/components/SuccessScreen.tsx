@@ -1,4 +1,5 @@
-import { Check, Share2, Sparkles } from 'lucide-react';
+import { Button } from './ui/button';
+import GlassSurface from './GlassSurface';
 
 interface SuccessScreenProps {
   totalSats: number;
@@ -8,39 +9,59 @@ interface SuccessScreenProps {
 
 const SuccessScreen = ({ totalSats, contributorCount, onShare }: SuccessScreenProps) => {
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="glass-panel p-12 text-center space-y-8">
-        <div className="success-icon">
-          <Check className="w-12 h-12 text-white" />
+    <div className="w-full max-w-lg mx-auto">
+      <GlassSurface 
+        width="100%" 
+        height="auto"
+        borderRadius={24}
+        brightness={70}
+        opacity={0.9}
+        className="p-8 text-center"
+      >
+        <div className="mb-6">
+          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-primary flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-white rounded-full bg-white/20"></div>
+          </div>
+        </div>
+        
+        <h2 className="text-3xl font-bold text-foreground mb-4">
+          Bounty Distributed!
+        </h2>
+        
+        <div className="space-y-4 mb-8">
+          <div className="p-4 bg-muted/10 rounded-lg">
+            <p className="text-lg text-muted-foreground">
+              Successfully sent
+            </p>
+            <p className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              {totalSats.toLocaleString()} sats
+            </p>
+          </div>
+          
+          <div className="p-4 bg-muted/10 rounded-lg">
+            <p className="text-lg text-muted-foreground">
+              to {contributorCount} valuable contributor{contributorCount > 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
         
         <div className="space-y-4">
-          <h2 className="text-4xl font-bold text-white">
-            Bounty Distributed!
-          </h2>
-          <p className="text-glass-muted text-lg">
-            Successfully sent {totalSats.toLocaleString()} sats to {contributorCount} contributors
-          </p>
+          <Button
+            onClick={onShare}
+            className="w-full h-12 text-base bg-gradient-primary hover:opacity-90"
+          >
+            Share Results on Nostr
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+            className="w-full h-12 text-base"
+          >
+            Analyze Another Thread
+          </Button>
         </div>
-
-        <div className="flex items-center justify-center space-x-2 text-glass-muted">
-          <Sparkles className="w-5 h-5" />
-          <span>Powered by AI-driven fair allocation</span>
-          <Sparkles className="w-5 h-5" />
-        </div>
-
-        <button
-          onClick={onShare}
-          className="w-full glass-button-primary py-4 text-lg animate-glow flex items-center justify-center space-x-3"
-        >
-          <Share2 className="w-5 h-5" />
-          <span>Share Results on Nostr</span>
-        </button>
-
-        <p className="text-glass-muted text-sm">
-          Let everyone know who added value and show the power of community rewards
-        </p>
-      </div>
+      </GlassSurface>
     </div>
   );
 };

@@ -18,8 +18,8 @@ class GeminiService {
     this.apiKey = apiKey;
   }
 
-  async analyzeThread(threadContent: string, totalBounty: number): Promise<GeminiResponse> {
-    const prompt = this.buildPrompt(threadContent, totalBounty);
+  async analyzeThread(threadContent: string, totalBounty: number, customDistribution?: number): Promise<GeminiResponse> {
+    const prompt = this.buildPrompt(threadContent, totalBounty, customDistribution);
     
     try {
       const response = await fetch(
@@ -58,7 +58,7 @@ class GeminiService {
     }
   }
 
-  private buildPrompt(threadContent: string, totalBounty: number): string {
+  private buildPrompt(threadContent: string, totalBounty: number, customDistribution?: number): string {
     return `You are an AI assistant helping to fairly distribute a ${totalBounty} sat bounty among contributors to a Nostr thread. 
 
 Analyze the following thread and determine how to allocate the bounty based on:
@@ -76,7 +76,7 @@ Instructions:
 - Prioritize substantive, helpful, or insightful contributions
 - Consider the effort and thought put into each response
 - The total allocation should equal ${totalBounty} sats
-- Minimum allocation for included contributors should be 100 sats
+- Minimum allocation for included contributors should be 100 sats${customDistribution ? `\n- Focus on the top ${customDistribution} most valuable contributors` : ''}
 
 Return your analysis as a JSON object with this exact structure:
 {
