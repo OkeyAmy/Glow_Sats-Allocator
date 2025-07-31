@@ -38,7 +38,7 @@ class GeminiService {
             }],
             generationConfig: {
               responseMimeType: "application/json",
-              temperature: 0.33,
+              temperature: 0.7,
             },
             safetySettings: [
               {
