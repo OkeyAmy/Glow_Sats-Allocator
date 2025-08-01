@@ -2,9 +2,9 @@
   "pubkey": "your-nostr-pubkey-in-hex",
   "widget": {
     "title": "AI Tip & Bounty Allocator",
-    "appUrl": "https://your-app-url.com",
-    "iconUrl": "https://your-app-url.com/favicon.ico",
-    "imageUrl": "https://your-app-url.com/preview.png",
+    "appUrl": "https://bounty-allocator.vercel.app/",
+    "iconUrl": "https://bounty-allocator.vercel.app/favicon.ico",
+    "imageUrl": "https://bounty-allocator.vercel.app/preview.png",
     "buttonTitle": "Analyze & Distribute Bounty",
     "tags": ["tool", "bounty", "nostr", "ai", "tips", "lightning"]
   }

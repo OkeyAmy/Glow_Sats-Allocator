@@ -246,7 +246,7 @@ function hexToRgb(hex: string): [number, number, number] {
   ];
 }
 
-export default function FaultyTerminal({
+const FaultyTerminal: React.FC<FaultyTerminalProps> = ({
   scale = 1,
   gridMul = [2, 1],
   digitSize = 1.5,
@@ -450,3 +450,5 @@ export default function FaultyTerminal({
     />
   );
 }
+
+export default React.memo(FaultyTerminal);
