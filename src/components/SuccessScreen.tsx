@@ -1,5 +1,6 @@
 import { Button } from './ui/button';
 import GlassSurface from './GlassSurface';
+import { Check } from 'lucide-react';
 
 interface SuccessScreenProps {
   totalSats: number;
@@ -19,8 +20,8 @@ const SuccessScreen = ({ totalSats, contributorCount, onShare }: SuccessScreenPr
         className="p-8 text-center"
       >
         <div className="mb-6">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-primary flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-white rounded-full bg-white/20"></div>
+          <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center border-4 border-green-500/30">
+            <Check className="w-8 h-8 text-green-300" strokeWidth={3} />
           </div>
         </div>
         

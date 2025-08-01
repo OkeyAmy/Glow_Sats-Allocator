@@ -68,6 +68,10 @@
     background-attachment: fixed;
   }
   
+  html, body, #root {
+    height: 100%;
+  }
+  
   html {
     font-family: 'Inter', sans-serif;
   }

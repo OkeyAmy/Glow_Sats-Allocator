@@ -8,6 +8,7 @@ import SuccessScreen from './SuccessScreen';
 import FaultyTerminal from './FaultyTerminal';
 import { nostrService } from '@/services/nostrService';
 import { GeminiService, type Contributor } from '@/services/geminiService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type AppState = 'input' | 'loading' | 'recommendations' | 'success';
 
@@ -213,12 +214,22 @@ Powered by AI Tip & Bounty Allocator ⚡`;
         brightness={0.4}
         className="fixed inset-0"
       />
-      <div className="relative z-10 min-h-screen p-6 flex items-center justify-center">
+      <div className="relative z-10 min-h-screen flex items-center justify-center">
         <ApiKeyModal 
           isOpen={showApiModal} 
           onSave={handleApiKeySave} 
         />
-        {renderCurrentScreen()}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={state}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {renderCurrentScreen()}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

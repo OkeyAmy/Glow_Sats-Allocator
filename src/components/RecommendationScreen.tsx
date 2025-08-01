@@ -63,7 +63,7 @@ const RecommendationScreen = ({
   };
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-6">
       <PostDisplay originalNote={originalNote} replyCount={replyCount} />
 
       <div className="relative">

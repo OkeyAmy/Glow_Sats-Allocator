@@ -23,9 +23,9 @@ const LoadingScreen = ({ status }: LoadingScreenProps) => {
           Analyzing Thread
         </h2>
         
-        <p className="text-muted-foreground text-lg leading-relaxed">
+        <div className="text-muted-foreground text-lg leading-relaxed h-12">
           {status}
-        </p>
+        </div>
         
         <div className="mt-8 w-full bg-muted/20 rounded-full h-3">
           <div className="bg-gradient-primary h-3 rounded-full animate-pulse w-3/4 transition-all duration-1000"></div>
