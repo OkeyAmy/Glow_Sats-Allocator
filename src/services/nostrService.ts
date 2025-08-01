@@ -167,21 +167,7 @@ class NostrService {
     return prompt;
   }
 
-  async publishNote(noteEvent: any): Promise<Event | null> {
-    try {
-      // In a real implementation, you would need to sign the event
-      // This requires user's private key or a browser extension like Alby
-      if (typeof window !== 'undefined' && (window as any).nostr) {
-        const signedEvent = await (window as any).nostr.signEvent(noteEvent);
-        await Promise.all(this.pool.publish(RELAYS, signedEvent));
-        return signedEvent;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error publishing note:', error);
-      return null;
-    }
-  }
+  
 
   close() {
     this.pool.close(RELAYS);

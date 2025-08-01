@@ -8,6 +8,7 @@ import SuccessScreen from './SuccessScreen';
 import FaultyTerminal from './FaultyTerminal';
 import { nostrService } from '@/services/nostrService';
 import { GeminiService, type Contributor } from '@/services/geminiService';
+import { SWhandler } from 'smart-widget-handler';
 import { motion, AnimatePresence } from 'framer-motion';
 type AppState = 'input' | 'loading' | 'recommendations' | 'success';
 
@@ -33,27 +34,16 @@ const BountyAllocator = () => {
     }
 
     // Check for initial note ID from widget context
-    try {
-      if (typeof window !== 'undefined' && window.parent !== window) {
-        // We're in an iframe, listen for messages
-        const handleMessage = (event: MessageEvent) => {
-          if (event.data?.type === 'smart-widget-init' && event.data?.noteId) {
-            setInitialNoteId(event.data.noteId);
-            toast({
-              title: "Note ID Received",
-              description: "Pre-filled from Nostr client",
-            });
-          }
-        };
-        
-        window.addEventListener('message', handleMessage);
-        // Signal ready to parent
-        window.parent.postMessage({ type: 'smart-widget-ready' }, '*');
-        
-        return () => {
-          window.removeEventListener('message', handleMessage);
-        };
-      }
+        try {
+      SWhandler.client.listen((e) => {
+        if (e.data?.noteId) {
+          setInitialNoteId(e.data.noteId);
+          toast({
+            title: "Note ID Received",
+            description: "Pre-filled from Nostr client",
+          });
+        }
+      });
     } catch (error) {
       // Not in iframe or cross-origin issues, continue normally
     }
@@ -141,23 +131,16 @@ const BountyAllocator = () => {
         description: `Successfully distributed to ${finalAllocations.length} contributors`,
       });
       
-      // Send results back to parent Nostr client
-      try {
-        if (typeof window !== 'undefined' && window.parent !== window) {
-          window.parent.postMessage({
-            type: 'smart-widget-result',
-            action: 'bounty_distributed',
-            results: {
-              totalSats: totalBounty,
-              contributors: finalAllocations,
-              originalNoteId: originalNote?.id,
-              distributionComplete: true
-            }
-          }, '*');
+            // Send results back to parent Nostr client
+      SWhandler.client.sendContext({
+        action: 'bounty_distributed',
+        results: {
+          totalSats: totalBounty,
+          contributors: finalAllocations,
+          originalNoteId: originalNote?.id,
+          distributionComplete: true
         }
-      } catch (error) {
-        // Iframe communication failed, continue normally
-      }
+      });
       
       setState('success');
     } catch (error) {
@@ -169,13 +152,10 @@ const BountyAllocator = () => {
     }
   };
 
-  const handleShare = async () => {
+    const handleShare = async () => {
     try {
-      // Format Nostr note with bounty results
-      const recipientTags = contributors.map(c => `nostr:${c.pubkey}`).join(' ');
+      const recipientTags = contributors.map(c => ['p', c.pubkey]);
       const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀
-
-${recipientTags}
 
 Thanks to everyone who added value to the conversation.
 
@@ -183,47 +163,38 @@ Original post: nostr:${originalNote?.id}
 
 Powered by AI Tip & Bounty Allocator ⚡`;
 
-      // Post to Nostr relays
-      const noteEvent = {
+      const noteTemplate = {
         kind: 1,
         content: shareText,
         tags: [
-          ...contributors.map(c => ['p', c.pubkey]),
-          ...(originalNote ? [['e', originalNote.id, '', 'mention']] : []),
+          ...recipientTags,
+          ...(originalNote ? [['e', originalNote.id, '', 'root']] : []),
           ['t', 'bounty'],
           ['t', 'tips'],
         ],
-        created_at: Math.floor(Date.now() / 1000),
       };
 
-      const publishedEvent = await nostrService.publishNote(noteEvent);
-      
+      const publishedEvent = await SWhandler.client.requestEventPublish(noteTemplate);
+
       if (publishedEvent) {
         toast({
           title: "Shared to Nostr!",
           description: "Your bounty distribution has been posted to Nostr",
         });
       } else {
-        // Fallback to clipboard
-        navigator.clipboard.writeText(shareText).then(() => {
-          toast({
-            title: "Share Text Copied",
-            description: "Could not auto-post, but text is copied to clipboard",
-          });
-        });
+        throw new Error("Publishing was not confirmed by the client.");
       }
     } catch (error) {
-      // Fallback to clipboard
-      const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀 
+      const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀
 
-Thanks to everyone who added value to the conversation. 
+Thanks to everyone who added value to the conversation.
 
 Powered by AI Tip & Bounty Allocator ⚡`;
 
       navigator.clipboard.writeText(shareText).then(() => {
         toast({
           title: "Share Text Copied",
-          description: "Post this to Nostr to spread the word!",
+          description: "Could not auto-post, but text is copied to clipboard. Please post it to Nostr to spread the word!",
         });
       });
     }
