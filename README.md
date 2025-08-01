@@ -106,7 +106,7 @@ Rules:
 1.  **Clone the repository:**
     ```sh
     git clone https://github.com/OkeyAmy/sats-allocator.git
-    cd glow-sats-allocator
+    cd sats-allocator
     ```
 
 2.  **Install dependencies:**
