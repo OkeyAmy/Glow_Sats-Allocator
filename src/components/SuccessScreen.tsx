@@ -6,9 +6,10 @@ interface SuccessScreenProps {
   totalSats: number;
   contributorCount: number;
   onShare: () => void;
+  onReset: () => void;
 }
 
-const SuccessScreen = ({ totalSats, contributorCount, onShare }: SuccessScreenProps) => {
+const SuccessScreen = ({ totalSats, contributorCount, onShare, onReset }: SuccessScreenProps) => {
   return (
     <div className="w-full max-w-lg mx-auto">
       <GlassSurface 
@@ -56,7 +57,7 @@ const SuccessScreen = ({ totalSats, contributorCount, onShare }: SuccessScreenPr
           
           <Button
             variant="outline"
-            onClick={() => window.location.reload()}
+            onClick={onReset}
             className="w-full h-12 text-base"
           >
             Analyze Another Thread
