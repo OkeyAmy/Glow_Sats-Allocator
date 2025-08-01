@@ -167,7 +167,7 @@
     transition: opacity 0.3s ease;
   }
   
-  .glass-button:hover {
+  .glass-button:hover, .glass-button:focus {
     background: linear-gradient(145deg, 
       hsla(0, 0%, 100%, 0.2) 0%,
       hsla(0, 0%, 100%, 0.15) 100%);
@@ -196,7 +196,11 @@
     opacity: 0.1;
   }
   
-  .glass-button-primary:hover {
+  .glass-button:focus {
+    @apply outline-none;
+  }
+  
+  .glass-button-primary:hover, .glass-button-primary:focus {
     background: linear-gradient(135deg, 
       hsla(240, 100%, 70%, 0.3) 0%,
       hsla(300, 100%, 70%, 0.2) 100%);
