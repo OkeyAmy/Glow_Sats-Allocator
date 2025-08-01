@@ -156,7 +156,7 @@ Return your analysis as a JSON object with this exact structure:
     {
       "name": "Author display name or 'Anonymous'",
       "pubkey": "full pubkey from the reply",
-      "contribution": "brief description of their contribution",
+      "contribution": "brief description of their contribution(must be the raw reply)",
       "recommendedSats": number,
       "aiJustification": "why this person deserves this amount (1-2 sentences)"
     }
