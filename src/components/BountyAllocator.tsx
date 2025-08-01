@@ -48,7 +48,7 @@ const BountyAllocator = () => {
     } catch (error) {
       // Not in iframe or cross-origin issues, continue normally
     }
-  }, [toast]);
+  }, []);
 
   const handleApiKeySave = (key: string) => {
     setApiKey(key);
