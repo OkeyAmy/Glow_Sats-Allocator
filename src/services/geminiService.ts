@@ -11,11 +11,60 @@ interface GeminiResponse {
   reasoning: string;
 }
 
+interface ChatMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+}
+
 class GeminiService {
   private apiKey: string;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+  }
+
+  async chatWithAI(messages: ChatMessage[]): Promise<string> {
+    try {
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey
+          },
+          body: JSON.stringify({
+            contents: messages,
+            generationConfig: {
+              temperature: 0.33,
+              maxOutputTokens: 250,
+            },
+            safetySettings: [
+              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+            ]
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const aiResponse = data.candidates[0]?.content?.parts[0]?.text;
+      
+      if (!aiResponse) {
+        throw new Error('Empty response from Gemini');
+      }
+
+      return aiResponse;
+    } catch (error) {
+      console.error('Gemini chat error:', error);
+      throw new Error('Failed to get response from AI');
+    }
   }
 
   async analyzeThread(threadContent: string, totalBounty: number, customDistribution?: number): Promise<GeminiResponse> {
@@ -38,7 +87,7 @@ class GeminiService {
             }],
             generationConfig: {
               responseMimeType: "application/json",
-              temperature: 0.7,
+              temperature: 0.4,
             },
             safetySettings: [
               {
@@ -94,6 +143,7 @@ ${threadContent}
 
 Instructions:
 - Only include replies that add genuine value
+- Only select the relevant contributors to the orignal tweets if no relevant repy pick the most relvant keep it few to avoid noise reply
 - Exclude simple reactions like "thanks" or single emoji responses
 - Prioritize substantive, helpful, or insightful contributions
 - Consider the effort and thought put into each response
@@ -148,4 +198,4 @@ IMPORTANT:
 }
 
 export { GeminiService };
-export type { Contributor, GeminiResponse };
+export type { Contributor, GeminiResponse, ChatMessage };

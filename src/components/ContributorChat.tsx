@@ -1,15 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import GlassSurface from './GlassSurface';
 import './ContributorChat.css';
-
-interface Message {
-  id: string;
-  type: 'user' | 'ai';
-  content: string;
-  timestamp: number;
-}
+import { GeminiService, type ChatMessage } from '@/services/geminiService';
 
 interface ContributorChatProps {
   contributorName: string;
@@ -24,46 +18,63 @@ const ContributorChat: React.FC<ContributorChatProps> = ({
   aiJustification,
   onClose
 }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [currentMessage, setCurrentMessage] = useState<Message | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [geminiService, setGeminiService] = useState<GeminiService | null>(null);
 
-  const addMessage = (content: string, type: 'user' | 'ai') => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      type,
-      content,
-      timestamp: Date.now()
-    };
-
-    // Fade out current message and show new one
-    if (currentMessage) {
-      setTimeout(() => {
-        setCurrentMessage(newMessage);
-      }, 300);
-    } else {
-      setCurrentMessage(newMessage);
+  useEffect(() => {
+    const savedKey = sessionStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      setGeminiService(new GeminiService(savedKey));
     }
+    
+    // Set initial context for the AI
+    const initialContext: ChatMessage = {
+      role: 'user',
+      parts: [{
+        text: `You are an AI assistant analyzing a contribution in a Nostr thread. 
+        The contributor is ${contributorName}.
+        Their reply was: "${contributorReply}"
+        Your initial analysis was: "${aiJustification}"
+        
+        Now, answer my questions based on this context.`
+      }]
+    };
+    setMessages([initialContext]);
 
-    setMessages(prev => [...prev, newMessage]);
-  };
+  }, [contributorName, contributorReply, aiJustification]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !geminiService) return;
 
-    const userMessage = inputValue.trim();
+    const userMessage: ChatMessage = {
+      role: 'user',
+      parts: [{ text: inputValue.trim() }]
+    };
+
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
 
-    addMessage(userMessage, 'user');
-
-    // Simulate AI response (in real app, this would call your AI service)
-    setTimeout(() => {
-      const aiResponse = `Based on ${contributorName}'s contribution: "${contributorReply.substring(0, 100)}...", I can see they ${Math.random() > 0.5 ? 'provided valuable technical insight' : 'added meaningful context to the discussion'}. Their analysis shows ${Math.random() > 0.5 ? 'deep understanding' : 'practical experience'} in this area.`;
-      addMessage(aiResponse, 'ai');
+    try {
+      const aiResponse = await geminiService.chatWithAI(newMessages);
+      const aiMessage: ChatMessage = {
+        role: 'model',
+        parts: [{ text: aiResponse }]
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMessage: ChatMessage = {
+        role: 'model',
+        parts: [{ text: "Sorry, I encountered an error. Please try again." }]
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -72,6 +83,8 @@ const ContributorChat: React.FC<ContributorChatProps> = ({
       handleSendMessage();
     }
   };
+
+  const displayedMessages = messages.slice(1); // Don't display the initial context message
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -138,23 +151,23 @@ const ContributorChat: React.FC<ContributorChatProps> = ({
                 Close
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {currentMessage && (
-                <div className={`animate-fade-in transition-all duration-300`}>
-                  <div className={`p-4 rounded-lg ${currentMessage.type === 'user' ? 'bg-muted/20 ml-8' : 'bg-primary/10 mr-8'}`}>
-                    <div className={`flex ${currentMessage.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] ${currentMessage.type === 'user' ? 'text-right' : 'text-left'}`}>
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+              {displayedMessages.map((message, index) => (
+                <div key={index} className={`animate-fade-in transition-all duration-300`}>
+                  <div className={`p-4 rounded-lg ${message.role === 'user' ? 'bg-muted/20 ml-8' : 'bg-primary/10 mr-8'}`}>
+                    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
                         <p className="text-sm font-medium text-foreground mb-1">
-                          {currentMessage.type === 'user' ? 'You' : 'AI Assistant'}
+                          {message.role === 'user' ? 'You' : 'AI Assistant'}
                         </p>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                          {currentMessage.content}
+                          {message.parts[0].text}
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
+              ))}
                {isLoading && (
                 <div className="mr-8">
                   <div className="p-4 rounded-lg bg-primary/10">
