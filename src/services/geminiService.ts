@@ -26,7 +26,7 @@ class GeminiService {
   async chatWithAI(messages: ChatMessage[]): Promise<string> {
     try {
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         {
           method: 'POST',
           headers: {
