@@ -44,6 +44,7 @@ const BountyAllocator = () => {
           });
         }
       });
+      SWhandler.client.ready();
     } catch (error) {
       // Not in iframe or cross-origin issues, continue normally
     }
