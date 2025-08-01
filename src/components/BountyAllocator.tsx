@@ -24,17 +24,9 @@ const BountyAllocator = () => {
   const [initialNoteId, setInitialNoteId] = useState<string>('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Check for existing API key
-    const savedKey = sessionStorage.getItem('gemini_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-    } else {
-      setShowApiModal(true);
-    }
-
-    // Check for initial note ID from widget context
-        try {
+    useEffect(() => {
+    // This effect handles the initial handshake with the YakiHonne host.
+    try {
       SWhandler.client.listen((e) => {
         if (e.data?.noteId) {
           setInitialNoteId(e.data.noteId);
@@ -44,9 +36,21 @@ const BountyAllocator = () => {
           });
         }
       });
+      // Signal to the host that the widget is ready to be displayed.
       SWhandler.client.ready();
     } catch (error) {
-      // Not in iframe or cross-origin issues, continue normally
+      // This will fail gracefully if not in an iframe.
+      console.info("Not running in a widget context.");
+    }
+  }, []);
+
+  useEffect(() => {
+    // This effect handles application-specific logic after the component mounts.
+    const savedKey = sessionStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
+    } else {
+      setShowApiModal(true);
     }
   }, []);
 
