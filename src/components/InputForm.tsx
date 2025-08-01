@@ -8,10 +8,11 @@ import GlassSurface from './GlassSurface';
 interface InputFormProps {
   onAnalyze: (noteId: string, bountyAmount: number, customDistribution?: number) => void;
   isLoading: boolean;
+  initialNoteId?: string;
 }
 
-const InputForm = ({ onAnalyze, isLoading }: InputFormProps) => {
-  const [noteId, setNoteId] = useState('');
+const InputForm = ({ onAnalyze, isLoading, initialNoteId }: InputFormProps) => {
+  const [noteId, setNoteId] = useState(initialNoteId || '');
   const [bountyAmount, setBountyAmount] = useState(1000);
   const [useCustomDistribution, setUseCustomDistribution] = useState(false);
   const [customDistribution, setCustomDistribution] = useState(5);

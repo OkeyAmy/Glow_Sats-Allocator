@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "public/.well-known/widget.json": {
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/.well-known/widget.json",
+      "destination": "/public/.well-known/widget.json"
+    }
+  ]
+}

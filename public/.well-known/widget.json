@@ -1,0 +1,11 @@
+{
+  "pubkey": "your-nostr-pubkey-in-hex",
+  "widget": {
+    "title": "AI Tip & Bounty Allocator",
+    "appUrl": "https://your-app-url.com",
+    "iconUrl": "https://your-app-url.com/favicon.ico",
+    "imageUrl": "https://your-app-url.com/preview.png",
+    "buttonTitle": "Analyze & Distribute Bounty",
+    "tags": ["tool", "bounty", "nostr", "ai", "tips", "lightning"]
+  }
+}
