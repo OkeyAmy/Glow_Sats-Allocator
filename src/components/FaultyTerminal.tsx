@@ -268,7 +268,7 @@ const FaultyTerminal: React.FC<FaultyTerminalProps> = ({
   className,
   style,
   ...rest
-}: FaultyTerminalProps) {
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const programRef = useRef<Program>(null);
   const rendererRef = useRef<Renderer>(null);
