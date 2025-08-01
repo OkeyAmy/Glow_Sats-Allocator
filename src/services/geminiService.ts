@@ -165,6 +165,7 @@ Return your analysis as a JSON object with this exact structure:
 }
 
 IMPORTANT: 
+- For links in the reply shorten it so that it can fit the limited screen it is been displayed on
 - Only return valid JSON, no other text
 - Include only contributors who genuinely added value
 - Ensure the total sats add up to exactly ${totalBounty}
