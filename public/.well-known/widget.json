@@ -1,5 +1,5 @@
 {
-  "pubkey": "your-nostr-pubkey-in-hex",
+  "pubkey": "e754256ae37b6d52805b9e1549c415f9bb8df5b0ef8210e9e91e2a1907fff8d0",
   "widget": {
     "title": "AI Tip & Bounty Allocator",
     "appUrl": "https://bounty-allocator.vercel.app/",
