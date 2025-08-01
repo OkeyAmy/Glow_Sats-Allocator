@@ -1,17 +1,27 @@
 {
-  "functions": {
-    "public/.well-known/widget.json": {
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
-      }
-    }
-  },
   "rewrites": [
     {
       "source": "/.well-known/widget.json",
       "destination": "/public/.well-known/widget.json"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/widget.json",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type"
+        }
+      ]
     }
   ]
 }
