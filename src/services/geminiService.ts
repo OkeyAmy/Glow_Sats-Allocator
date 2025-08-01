@@ -156,7 +156,7 @@ Return your analysis as a JSON object with this exact structure:
     {
       "name": "Author display name or 'Anonymous'",
       "pubkey": "full pubkey from the reply",
-      "contribution": "brief description of their contribution(must be the raw reply)",
+      "contribution": "brief description of their contribution(must be the raw reply. For links or nay word emebd them into shorter text for example "inthereplyshortenitsothatitcanfitthelimitedscreenitisbeendisplayed" should now be written like this "inthe... thank")",
       "recommendedSats": number,
       "aiJustification": "why this person deserves this amount (1-2 sentences)"
     }
@@ -165,7 +165,6 @@ Return your analysis as a JSON object with this exact structure:
 }
 
 IMPORTANT: 
-- For links in the reply shorten it so that it can fit the limited screen it is been displayed on
 - Only return valid JSON, no other text
 - Include only contributors who genuinely added value
 - Ensure the total sats add up to exactly ${totalBounty}
