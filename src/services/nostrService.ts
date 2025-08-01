@@ -1,4 +1,4 @@
-import { SimplePool, Filter, Event } from 'nostr-tools';
+import { SimplePool, Filter, Event, nip19 } from 'nostr-tools';
 
 const RELAYS = [
   'wss://relay.damus.io',
@@ -26,15 +26,48 @@ class NostrService {
     this.pool = new SimplePool();
   }
 
+  private processNoteId(noteId: string): { id: string; relays?: string[] } {
+    // Remove any whitespace
+    noteId = noteId.trim();
+    
+    try {
+      // Check if it's a bech32 encoded identifier
+      if (noteId.startsWith('note1') || noteId.startsWith('nevent1')) {
+        const decoded = nip19.decode(noteId);
+        
+        if (decoded.type === 'note') {
+          return { id: decoded.data };
+        } else if (decoded.type === 'nevent') {
+          return { 
+            id: decoded.data.id,
+            relays: decoded.data.relays 
+          };
+        }
+      }
+      
+      // If it's already a hex string, validate it
+      if (/^[a-fA-F0-9]{64}$/.test(noteId)) {
+        return { id: noteId };
+      }
+      
+      throw new Error('Invalid note ID format');
+    } catch (error) {
+      throw new Error(`Invalid note ID: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async fetchThreadReplies(noteId: string): Promise<NostrNote[]> {
     try {
+      const { id: hexId, relays } = this.processNoteId(noteId);
+      const targetRelays = relays && relays.length > 0 ? [...relays, ...RELAYS] : RELAYS;
+      
       const filter: Filter = {
         kinds: [1],
-        '#e': [noteId],
+        '#e': [hexId],
         limit: 100
       };
 
-      const events = await this.pool.querySync(RELAYS, filter);
+      const events = await this.pool.querySync(targetRelays, filter);
       
       // Get unique pubkeys for author info
       const uniquePubkeys = [...new Set(events.map(e => e.pubkey))];
@@ -74,12 +107,15 @@ class NostrService {
 
   async fetchOriginalNote(noteId: string): Promise<NostrNote | null> {
     try {
+      const { id: hexId, relays } = this.processNoteId(noteId);
+      const targetRelays = relays && relays.length > 0 ? [...relays, ...RELAYS] : RELAYS;
+      
       const filter: Filter = {
         kinds: [1],
-        ids: [noteId]
+        ids: [hexId]
       };
 
-      const events = await this.pool.querySync(RELAYS, filter);
+      const events = await this.pool.querySync(targetRelays, filter);
       if (events.length === 0) return null;
 
       const event = events[0];

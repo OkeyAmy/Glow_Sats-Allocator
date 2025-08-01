@@ -63,12 +63,12 @@ const InputForm = ({ onAnalyze, isLoading }: InputFormProps) => {
               type="text"
               value={noteId}
               onChange={(e) => setNoteId(e.target.value)}
-              placeholder="Paste Nostr note ID here..."
+              placeholder="note1... or nevent1... or hex ID"
               className="w-full h-12 text-base"
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              Find the note ID from any Nostr client or explorer
+              Supports both bech32 identifiers (note1..., nevent1...) and hex event IDs
             </p>
           </div>
           
