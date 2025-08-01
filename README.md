@@ -123,7 +123,7 @@ Rules:
     ```sh
     npm run dev
     ```
-    This will start the development server, typically at `http://localhost:5173`.
+    This will start the development server, typically at `http://localhost:8080`.
 
 ## Security & Privacy by Design
 
