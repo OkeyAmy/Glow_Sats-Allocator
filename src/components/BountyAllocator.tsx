@@ -141,26 +141,64 @@ const BountyAllocator = () => {
     }
   };
 
-  const handleShare = () => {
-    // In a real implementation, this would:
-    // 1. Format a Nostr note with the bounty results
-    // 2. Tag all recipients
-    // 3. Include the "Powered by" attribution
-    // 4. Post to Nostr relays
-    
-    const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀 
+  const handleShare = async () => {
+    try {
+      // Format Nostr note with bounty results
+      const recipientTags = contributors.map(c => `nostr:${c.pubkey}`).join(' ');
+      const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀
+
+${recipientTags}
+
+Thanks to everyone who added value to the conversation.
+
+Original post: nostr:${originalNote?.id}
+
+Powered by AI Tip & Bounty Allocator ⚡`;
+
+      // Post to Nostr relays
+      const noteEvent = {
+        kind: 1,
+        content: shareText,
+        tags: [
+          ...contributors.map(c => ['p', c.pubkey]),
+          ...(originalNote ? [['e', originalNote.id, '', 'mention']] : []),
+          ['t', 'bounty'],
+          ['t', 'tips'],
+        ],
+        created_at: Math.floor(Date.now() / 1000),
+      };
+
+      const publishedEvent = await nostrService.publishNote(noteEvent);
+      
+      if (publishedEvent) {
+        toast({
+          title: "Shared to Nostr!",
+          description: "Your bounty distribution has been posted to Nostr",
+        });
+      } else {
+        // Fallback to clipboard
+        navigator.clipboard.writeText(shareText).then(() => {
+          toast({
+            title: "Share Text Copied",
+            description: "Could not auto-post, but text is copied to clipboard",
+          });
+        });
+      }
+    } catch (error) {
+      // Fallback to clipboard
+      const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀 
 
 Thanks to everyone who added value to the conversation. 
 
 Powered by AI Tip & Bounty Allocator ⚡`;
 
-    // For demo, copy to clipboard
-    navigator.clipboard.writeText(shareText).then(() => {
-      toast({
-        title: "Share Text Copied",
-        description: "Post this to Nostr to spread the word!",
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast({
+          title: "Share Text Copied",
+          description: "Post this to Nostr to spread the word!",
+        });
       });
-    });
+    }
   };
 
   const renderCurrentScreen = () => {
