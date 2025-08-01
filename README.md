@@ -68,7 +68,7 @@ To run Glow locally, follow these steps:
 
 1.  **Clone the repository:**
     ```sh
-    git clone <YOUR_GIT_URL>
+    git clone https://github.com/OkeyAmy/sats-allocator.git
     cd glow-sats-allocator
     ```
 
