@@ -36,12 +36,12 @@ const InputForm = ({ onAnalyze, isLoading, initialNoteId }: InputFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-3">
+    <div className="w-full h-full max-w-lg mx-auto flex flex-col justify-center p-2">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
           AI Bounty Allocator
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground text-sm md:text-base">
           Analyze threads and reward valuable contributions
         </p>
       </div>
@@ -52,7 +52,7 @@ const InputForm = ({ onAnalyze, isLoading, initialNoteId }: InputFormProps) => {
         borderRadius={24}
         brightness={70}
         opacity={0.9}
-        className="p-8"
+        className="p-4 md:p-6"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">

@@ -1,6 +1,7 @@
 import { Button } from './ui/button';
 import GlassSurface from './GlassSurface';
-import { Check } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface SuccessScreenProps {
   totalSats: number;
@@ -10,8 +11,25 @@ interface SuccessScreenProps {
 }
 
 const SuccessScreen = ({ totalSats, contributorCount, onShare, onReset }: SuccessScreenProps) => {
+  const { toast } = useToast();
+
+  const handleCopyToClipboard = () => {
+    const shareText = `Just distributed a ${totalSats.toLocaleString()} sat bounty to ${contributorCount} amazing contributors! 🚀
+
+Thanks to everyone who added value to the conversation.
+
+Powered by AI Tip & Bounty Allocator ⚡`;
+    
+    navigator.clipboard.writeText(shareText).then(() => {
+      toast({
+        title: "Copied to clipboard",
+        description: "Share text has been copied to your clipboard",
+      });
+    });
+  };
+
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full h-full max-w-lg mx-auto flex items-center justify-center">
       <GlassSurface 
         width="100%" 
         height="auto"
@@ -47,18 +65,27 @@ const SuccessScreen = ({ totalSats, contributorCount, onShare, onReset }: Succes
           </div>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Button
             onClick={onShare}
-            className="w-full h-12 text-base bg-gradient-primary hover:opacity-90"
+            className="w-full h-11 text-sm bg-gradient-primary hover:opacity-90"
           >
             Share Results on Nostr
           </Button>
           
           <Button
             variant="outline"
+            onClick={handleCopyToClipboard}
+            className="w-full h-11 text-sm"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Copy to Clipboard
+          </Button>
+          
+          <Button
+            variant="outline"
             onClick={onReset}
-            className="w-full h-12 text-base"
+            className="w-full h-11 text-sm"
           >
             Analyze Another Thread
           </Button>

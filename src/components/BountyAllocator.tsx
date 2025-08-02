@@ -25,6 +25,8 @@ const BountyAllocator = () => {
   const [initialNoteId, setInitialNoteId] = useState<string>('');
   const [userMetadata, setUserMetadata] = useState<any>(null);
   const [hostOrigin, setHostOrigin] = useState<string>('');
+  const [userBalance, setUserBalance] = useState<number>(0);
+  const [paymentVerification, setPaymentVerification] = useState<{[key: string]: 'pending' | 'success' | 'failed'}>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,12 +40,25 @@ const BountyAllocator = () => {
         console.log('Received message from host:', event);
 
         if (event.kind === 'user-metadata') {
-          setUserMetadata(event.data?.user);
+          const user = event.data?.user;
+          setUserMetadata(user);
           setHostOrigin(event.data?.host_origin || '');
+          setUserBalance(user?.balance || 0);
           toast({
             title: "Connected to Nostr client",
-            description: `Welcome ${event.data?.user?.display_name || event.data?.user?.name || 'user'}!`,
+            description: `Welcome ${user?.display_name || user?.name || 'user'}!`,
           });
+        }
+
+        if (event.kind === 'payment-response') {
+          const response = event.data;
+          const pubkey = response.nostrPubkey;
+          if (pubkey) {
+            setPaymentVerification(prev => ({
+              ...prev,
+              [pubkey]: response.status ? 'success' : 'failed'
+            }));
+          }
         }
 
         // Handle note ID if passed from context
@@ -156,12 +171,30 @@ const BountyAllocator = () => {
 
   const handleProceedToPayment = async (finalAllocations: { pubkey: string; sats: number }[]) => {
     try {
+      // Check if user has sufficient balance
+      const totalAmount = finalAllocations.reduce((sum, allocation) => sum + allocation.sats, 0);
+      if (userBalance < totalAmount) {
+        toast({
+          title: "Insufficient Balance",
+          description: `You need ${totalAmount} sats but only have ${userBalance} sats`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Process payments through YakiHonne zap functionality
       setLoadingStatus('Processing payments...');
       setState('loading');
 
-      // Fetch contributor lightning addresses from their profiles
-      const paymentPromises = finalAllocations.map(async (allocation) => {
+      // Initialize payment verification states
+      const verificationStates: {[key: string]: 'pending' | 'success' | 'failed'} = {};
+      finalAllocations.forEach(allocation => {
+        verificationStates[allocation.pubkey] = 'pending';
+      });
+      setPaymentVerification(verificationStates);
+
+      // Fetch contributor lightning addresses and request payments
+      for (const allocation of finalAllocations) {
         try {
           // Get contributor profile to find lightning address
           const profile = await nostrService.fetchUserProfile(allocation.pubkey);
@@ -179,42 +212,73 @@ const BountyAllocator = () => {
             if (hostOrigin) {
               SWhandler.client.requestPayment(paymentRequest, hostOrigin);
             }
-            
-            return { success: true, pubkey: allocation.pubkey, sats: allocation.sats };
           } else {
             console.warn(`No lightning address found for ${allocation.pubkey}`);
-            return { success: false, pubkey: allocation.pubkey, sats: allocation.sats, reason: 'No lightning address' };
+            setPaymentVerification(prev => ({
+              ...prev,
+              [allocation.pubkey]: 'failed'
+            }));
           }
         } catch (error) {
           console.error(`Failed to process payment for ${allocation.pubkey}:`, error);
-          return { success: false, pubkey: allocation.pubkey, sats: allocation.sats, reason: 'Payment error' };
+          setPaymentVerification(prev => ({
+            ...prev,
+            [allocation.pubkey]: 'failed'
+          }));
         }
-      });
-
-      const paymentResults = await Promise.all(paymentPromises);
-      const successfulPayments = paymentResults.filter(r => r.success);
-      const failedPayments = paymentResults.filter(r => !r.success);
-
-      toast({
-        title: "Payment Processing Complete",
-        description: `${successfulPayments.length} payments sent successfully${failedPayments.length > 0 ? `, ${failedPayments.length} failed` : ''}`,
-      });
-
-      // Send results back to parent Nostr client
-      if (hostOrigin) {
-        SWhandler.client.sendContext(JSON.stringify({
-          action: 'bounty_distributed',
-          results: {
-            totalSats: totalBounty,
-            contributors: finalAllocations,
-            originalNoteId: originalNote?.id,
-            distributionComplete: true,
-            paymentResults
-          }
-        }), hostOrigin);
       }
+
+      // Wait for all payment verifications
+      setLoadingStatus('Waiting for payment confirmations...');
       
-      setState('success');
+      // Check verification status every 2 seconds for up to 30 seconds
+      let attempts = 0;
+      const maxAttempts = 15;
+      
+      const checkVerifications = () => {
+        attempts++;
+        const currentVerifications = Object.values(paymentVerification);
+        const pendingPayments = currentVerifications.filter(status => status === 'pending').length;
+        
+        if (pendingPayments === 0 || attempts >= maxAttempts) {
+          // All payments processed or timeout
+          const successfulPayments = Object.entries(paymentVerification).filter(([_, status]) => status === 'success');
+          const failedPayments = Object.entries(paymentVerification).filter(([_, status]) => status === 'failed');
+
+          // Update user balance
+          const paidAmount = successfulPayments.length * (totalAmount / finalAllocations.length);
+          setUserBalance(prev => prev - paidAmount);
+
+          toast({
+            title: "Payment Processing Complete",
+            description: `${successfulPayments.length} payments confirmed${failedPayments.length > 0 ? `, ${failedPayments.length} failed` : ''}`,
+          });
+
+          // Send results back to parent Nostr client
+          if (hostOrigin) {
+            SWhandler.client.sendContext(JSON.stringify({
+              action: 'bounty_distributed',
+              results: {
+                totalSats: totalAmount,
+                contributors: finalAllocations,
+                originalNoteId: originalNote?.id,
+                distributionComplete: true,
+                paymentResults: {
+                  successful: successfulPayments.length,
+                  failed: failedPayments.length
+                }
+              }
+            }), hostOrigin);
+          }
+          
+          setState('success');
+        } else {
+          setTimeout(checkVerifications, 2000);
+        }
+      };
+
+      setTimeout(checkVerifications, 2000);
+      
     } catch (error) {
       toast({
         title: "Payment Failed",
@@ -305,9 +369,16 @@ Powered by AI Tip & Bounty Allocator ⚡`;
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="w-full h-full max-w-full max-h-full overflow-hidden">
+      {/* User Balance Display */}
+      {userMetadata && (
+        <div className="absolute top-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1 border text-sm">
+          <span className="text-muted-foreground">Balance:</span>
+          <span className="ml-1 font-medium text-primary">{userBalance.toLocaleString()} sats</span>
+        </div>
+      )}
       
-      <div className="relative z-10 min-h-screen flex items-center justify-center">
+      <div className="relative w-full h-full flex items-center justify-center p-2">
         <ApiKeyModal 
           isOpen={showApiModal} 
           onSave={handleApiKeySave} 
@@ -319,6 +390,7 @@ Powered by AI Tip & Bounty Allocator ⚡`;
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
+            className="w-full h-full max-w-full max-h-full"
           >
             {renderCurrentScreen()}
           </motion.div>

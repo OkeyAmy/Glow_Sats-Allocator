@@ -6,14 +6,14 @@ interface LoadingScreenProps {
 
 const LoadingScreen = ({ status }: LoadingScreenProps) => {
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full h-full max-w-lg mx-auto flex items-center justify-center p-2">
       <GlassSurface 
         width="100%" 
         height="auto"
         borderRadius={24}
         brightness={70}
         opacity={0.9}
-        className="p-8 text-center"
+        className="p-4 md:p-6 text-center"
       >
         <div className="mb-6">
           <div className="w-16 h-16 mx-auto border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
