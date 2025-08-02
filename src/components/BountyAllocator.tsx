@@ -243,7 +243,6 @@ Powered by AI Tip & Bounty Allocator ⚡`;
             originalNote={originalNote}
             replyCount={replyCount}
             onProceed={handleProceedToPayment}
-            onBack={() => setState('input')}
           />
         );
       case 'success':
