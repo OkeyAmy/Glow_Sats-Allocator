@@ -22,6 +22,7 @@ interface RecommendationScreenProps {
   originalNote: NostrNote;
   replyCount: number;
   onProceed: (allocations: { pubkey: string; sats: number }[]) => void;
+  onBack: () => void;
 }
 
 const RecommendationScreen = ({ 
@@ -29,7 +30,8 @@ const RecommendationScreen = ({
   totalBounty, 
   originalNote,
   replyCount,
-  onProceed 
+  onProceed,
+  onBack
 }: RecommendationScreenProps) => {
   const [allocations, setAllocations] = useState<{ [pubkey: string]: number }>(
     contributors.reduce((acc, contributor) => {
@@ -76,29 +78,33 @@ const RecommendationScreen = ({
           className="absolute inset-0"
         />
         <div className="relative z-10 p-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Distribution Recommendations
-            </h2>
-            <p className="text-muted-foreground">
-              AI found {contributors.length} valuable contributors
-            </p>
+          <div className="flex items-center justify-between mb-6">
+            <Button onClick={onBack} variant="outline">Back</Button>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Distribution Recommendations
+              </h2>
+              <p className="text-gray-300">
+                AI found {contributors.length} valuable contributors
+              </p>
+            </div>
+            <div style={{width: '68px'}} />
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-background/50 rounded-lg">
+          <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-black bg-opacity-25 rounded-lg">
             <div className="text-center">
-              <span className="text-sm text-muted-foreground block">Total Bounty</span>
-              <span className="text-lg font-bold text-foreground">{totalBounty.toLocaleString()}</span>
+              <span className="text-sm text-gray-400 block">Total Bounty</span>
+              <span className="text-lg font-bold text-white">{totalBounty.toLocaleString()}</span>
             </div>
             <div className="text-center">
-              <span className="text-sm text-muted-foreground block">Allocated</span>
-              <span className={`text-lg font-bold ${isOverAllocated ? 'text-destructive' : 'text-foreground'}`}>
+              <span className="text-sm text-gray-400 block">Allocated</span>
+              <span className={`text-lg font-bold ${isOverAllocated ? 'text-red-500' : 'text-white'}`}>
                 {totalAllocated.toLocaleString()}
               </span>
             </div>
             <div className="text-center">
-              <span className="text-sm text-muted-foreground block">Remaining</span>
-              <span className={`text-lg font-bold ${isOverAllocated ? 'text-destructive' : 'text-green-400'}`}>
+              <span className="text-sm text-gray-400 block">Remaining</span>
+              <span className={`text-lg font-bold ${isOverAllocated ? 'text-red-500' : 'text-green-400'}`}>
                 {(totalBounty - totalAllocated).toLocaleString()}
               </span>
             </div>
