@@ -156,7 +156,7 @@ Return your analysis as a JSON object with this exact structure:
     {
       "name": "Author display name or 'Anonymous'",
       "pubkey": "full pubkey from the reply",
-      "contribution": "brief description of their contribution(must be the raw reply. For links or nay word emebd them into shorter text for example "inthereplyshortenitsothatitcanfitthelimitedscreenitisbeendisplayed" should now be written like this "inthe... thank")",
+      "contribution": "brief description of their contribution(must be the raw reply. For links or any long word emebd them into shorter text for example "nostr:nevent1qqsvaut2vxl5x5l2t95e7e25dnw3vl4668tmmy0t6726eyu8w4tcptsp9dmhxue69uhhyet" should now be written like this "nostr... thank")",
       "recommendedSats": number,
       "aiJustification": "why this person deserves this amount (1-2 sentences)"
     }
