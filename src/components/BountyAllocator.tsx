@@ -8,8 +8,9 @@ import SuccessScreen from './SuccessScreen';
 import FaultyTerminal from './FaultyTerminal';
 import { nostrService } from '@/services/nostrService';
 import { GeminiService, type Contributor } from '@/services/geminiService';
-import { SWhandler } from 'smart-widget-handler';
+import SWhandler from 'smart-widget-handler';
 import { motion, AnimatePresence } from 'framer-motion';
+
 type AppState = 'input' | 'loading' | 'recommendations' | 'success';
 
 const BountyAllocator = () => {
@@ -22,27 +23,52 @@ const BountyAllocator = () => {
   const [originalNote, setOriginalNote] = useState<any>(null);
   const [replyCount, setReplyCount] = useState(0);
   const [initialNoteId, setInitialNoteId] = useState<string>('');
+  const [userMetadata, setUserMetadata] = useState<any>(null);
+  const [hostOrigin, setHostOrigin] = useState<string>('');
   const { toast } = useToast();
 
-    useEffect(() => {
-    // This effect handles the initial handshake with the YakiHonne host.
+  useEffect(() => {
+    // Initialize YakiHonne Smart Widget communication
     try {
-      SWhandler.client.listen((e) => {
-        if (e.data?.noteId) {
-          setInitialNoteId(e.data.noteId);
+      // Signal to the host that the widget is ready
+      SWhandler.client.ready();
+
+      // Listen for messages from the host
+      const listener = SWhandler.client.listen((event: any) => {
+        console.log('Received message from host:', event);
+
+        if (event.kind === 'user-metadata') {
+          setUserMetadata(event.data?.user);
+          setHostOrigin(event.data?.host_origin || '');
+          toast({
+            title: "Connected to Nostr client",
+            description: `Welcome ${event.data?.user?.display_name || event.data?.user?.name || 'user'}!`,
+          });
+        }
+
+        // Handle note ID if passed from context
+        if (event.data?.noteId) {
+          setInitialNoteId(event.data.noteId);
           toast({
             title: "Note ID Received",
             description: "Pre-filled from Nostr client",
           });
         }
+
+        if (event.kind === 'err-msg') {
+          toast({
+            title: "Error from host",
+            description: event.data,
+            variant: "destructive",
+          });
+        }
       });
-      // Signal to the host that the widget is ready to be displayed.
-      SWhandler.client.ready();
+
+      return () => listener?.close();
     } catch (error) {
-      // This will fail gracefully if not in an iframe.
       console.info("Not running in a widget context.");
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     // This effect handles application-specific logic after the component mounts.
@@ -130,22 +156,63 @@ const BountyAllocator = () => {
 
   const handleProceedToPayment = async (finalAllocations: { pubkey: string; sats: number }[]) => {
     try {
-      // Simulate payment success (keep existing logic)
-      toast({
-        title: "Payments Sent!",
-        description: `Successfully distributed to ${finalAllocations.length} contributors`,
-      });
-      
-            // Send results back to parent Nostr client
-      SWhandler.client.sendContext({
-        action: 'bounty_distributed',
-        results: {
-          totalSats: totalBounty,
-          contributors: finalAllocations,
-          originalNoteId: originalNote?.id,
-          distributionComplete: true
+      // Process payments through YakiHonne zap functionality
+      setLoadingStatus('Processing payments...');
+      setState('loading');
+
+      // Fetch contributor lightning addresses from their profiles
+      const paymentPromises = finalAllocations.map(async (allocation) => {
+        try {
+          // Get contributor profile to find lightning address
+          const profile = await nostrService.fetchUserProfile(allocation.pubkey);
+          const lightningAddress = profile?.lud16 || profile?.lud06;
+          
+          if (lightningAddress) {
+            // Request payment through YakiHonne host
+            const paymentRequest = {
+              address: lightningAddress,
+              amount: allocation.sats,
+              nostrPubkey: allocation.pubkey,
+            };
+
+            // Use smart widget handler to request payment
+            if (hostOrigin) {
+              SWhandler.client.requestPayment(paymentRequest, hostOrigin);
+            }
+            
+            return { success: true, pubkey: allocation.pubkey, sats: allocation.sats };
+          } else {
+            console.warn(`No lightning address found for ${allocation.pubkey}`);
+            return { success: false, pubkey: allocation.pubkey, sats: allocation.sats, reason: 'No lightning address' };
+          }
+        } catch (error) {
+          console.error(`Failed to process payment for ${allocation.pubkey}:`, error);
+          return { success: false, pubkey: allocation.pubkey, sats: allocation.sats, reason: 'Payment error' };
         }
       });
+
+      const paymentResults = await Promise.all(paymentPromises);
+      const successfulPayments = paymentResults.filter(r => r.success);
+      const failedPayments = paymentResults.filter(r => !r.success);
+
+      toast({
+        title: "Payment Processing Complete",
+        description: `${successfulPayments.length} payments sent successfully${failedPayments.length > 0 ? `, ${failedPayments.length} failed` : ''}`,
+      });
+
+      // Send results back to parent Nostr client
+      if (hostOrigin) {
+        SWhandler.client.sendContext(JSON.stringify({
+          action: 'bounty_distributed',
+          results: {
+            totalSats: totalBounty,
+            contributors: finalAllocations,
+            originalNoteId: originalNote?.id,
+            distributionComplete: true,
+            paymentResults
+          }
+        }), hostOrigin);
+      }
       
       setState('success');
     } catch (error) {
@@ -154,10 +221,11 @@ const BountyAllocator = () => {
         description: "Could not process Lightning payments",
         variant: "destructive",
       });
+      setState('recommendations');
     }
   };
 
-    const handleShare = async () => {
+  const handleShare = async () => {
     try {
       const recipientTags = contributors.map(c => ['p', c.pubkey]);
       const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀
@@ -179,15 +247,16 @@ Powered by AI Tip & Bounty Allocator ⚡`;
         ],
       };
 
-      const publishedEvent = await SWhandler.client.requestEventPublish(noteTemplate);
-
-      if (publishedEvent) {
+      // Use YakiHonne smart widget handler to publish the note
+      if (hostOrigin) {
+        SWhandler.client.requestEventPublish(noteTemplate, hostOrigin);
+        
         toast({
           title: "Shared to Nostr!",
           description: "Your bounty distribution has been posted to Nostr",
         });
       } else {
-        throw new Error("Publishing was not confirmed by the client.");
+        throw new Error("No host connection available");
       }
     } catch (error) {
       const shareText = `Just distributed a ${totalBounty.toLocaleString()} sat bounty to ${contributors.length} amazing contributors! 🚀

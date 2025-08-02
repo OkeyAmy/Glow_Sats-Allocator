@@ -167,7 +167,31 @@ class NostrService {
     return prompt;
   }
 
-  
+  async fetchUserProfile(pubkey: string): Promise<any> {
+    try {
+      const filter: Filter = {
+        kinds: [0],
+        authors: [pubkey],
+        limit: 1
+      };
+
+      const events = await this.pool.querySync(RELAYS, filter);
+      
+      if (events.length > 0) {
+        try {
+          return JSON.parse(events[0].content);
+        } catch (e) {
+          console.error('Failed to parse user profile:', e);
+          return null;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  }
 
   close() {
     this.pool.close(RELAYS);
