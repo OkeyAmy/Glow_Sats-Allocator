@@ -32,7 +32,7 @@ class NostrService {
     
     try {
       // Check if it's a bech32 encoded identifier
-      if (noteId.startsWith('note1') || noteId.startsWith('nevent1')) {
+      if (noteId.startsWith('note1') || noteId.startsWith('nevent1') || noteId.startsWith('naddr1')) {
         const decoded = nip19.decode(noteId);
         
         if (decoded.type === 'note') {
@@ -42,6 +42,18 @@ class NostrService {
             id: decoded.data.id,
             relays: decoded.data.relays 
           };
+        } else if (decoded.type === 'naddr') {
+          // For naddr (nostr address), we need to construct a filter differently
+          // For now, we'll try to use the identifier if it looks like a hex ID
+          const identifier = decoded.data.identifier;
+          if (identifier && /^[a-fA-F0-9]{64}$/.test(identifier)) {
+            return { 
+              id: identifier,
+              relays: decoded.data.relays 
+            };
+          }
+          // If identifier is not a hex ID, we'll throw an error for now
+          throw new Error('naddr with non-hex identifier not supported yet');
         }
       }
       

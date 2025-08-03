@@ -22,6 +22,7 @@ interface RecommendationScreenProps {
   originalNote: NostrNote;
   replyCount: number;
   onProceed: (allocations: { pubkey: string; sats: number }[]) => void;
+  userBalance?: number;
 }
 
 const RecommendationScreen = ({ 
@@ -29,7 +30,8 @@ const RecommendationScreen = ({
   totalBounty, 
   originalNote,
   replyCount,
-  onProceed 
+  onProceed,
+  userBalance = 0
 }: RecommendationScreenProps) => {
   const [allocations, setAllocations] = useState<{ [pubkey: string]: number }>(
     contributors.reduce((acc, contributor) => {
@@ -201,6 +203,7 @@ const RecommendationScreen = ({
           contributorReply={selectedContributor.contribution}
           aiJustification={selectedContributor.aiJustification}
           onClose={() => setSelectedContributor(null)}
+          userBalance={userBalance}
         />
       )}
     </div>

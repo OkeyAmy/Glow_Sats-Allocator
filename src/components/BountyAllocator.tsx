@@ -352,6 +352,7 @@ Powered by AI Tip & Bounty Allocator ⚡`;
             originalNote={originalNote}
             replyCount={replyCount}
             onProceed={handleProceedToPayment}
+            userBalance={userBalance}
           />
         );
       case 'success':
