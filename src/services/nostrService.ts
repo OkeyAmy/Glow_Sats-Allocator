@@ -32,7 +32,7 @@ class NostrService {
     
     try {
       // Check if it's a bech32 encoded identifier
-      if (noteId.startsWith('note1') || noteId.startsWith('nevent1')) {
+      if (noteId.startsWith('note1') || noteId.startsWith('nevent1') || noteId.startsWith('naddr1')) {
         const decoded = nip19.decode(noteId);
         
         if (decoded.type === 'note') {
@@ -40,6 +40,13 @@ class NostrService {
         } else if (decoded.type === 'nevent') {
           return { 
             id: decoded.data.id,
+            relays: decoded.data.relays 
+          };
+        } else if (decoded.type === 'naddr') {
+          // For naddr, we need to construct the event ID from the identifier
+          // For now, we'll use the identifier as the tag value to search for
+          return { 
+            id: decoded.data.identifier || decoded.data.pubkey,
             relays: decoded.data.relays 
           };
         }
