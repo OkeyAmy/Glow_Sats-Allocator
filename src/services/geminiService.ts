@@ -130,13 +130,14 @@ class GeminiService {
   }
 
   private buildPrompt(threadContent: string, totalBounty: number, customDistribution?: number): string {
-    return `You are an AI assistant helping to fairly distribute a ${totalBounty} sat bounty among contributors to a Nostr thread. 
+    return `You are a sophisticated **Nostr Analyst AI**. Your **sole mission** is to objectively analyze a conversation thread and recommend a fair distribution of a ${totalBounty} sat bounty. 
 
-Analyze the following thread and determine how to allocate the bounty based on:
-1. Quality and depth of contributions
-2. Helpfulness to the original poster
-3. Originality and insight
-4. Engagement value
+Analyze the following thread and determine how to allocate the bounty based on the following **Value Criteria**:
+1. **Problem Solving:** Did the reply directly answer a question or solve a problem posted in the thread?
+2. **Novelty & Insight:** Did the reply introduce a new, valuable idea or a unique, insightful perspective?
+3. **Constructive Argument:** Did the reply constructively challenge, build upon, or add significant nuance to previous points?
+4. **Data Provision:** Did the reply provide a useful link, data, source, or verifiable evidence that enriched the conversation?
+
 
 Thread content:
 ${threadContent}
@@ -148,7 +149,11 @@ Instructions:
 - Prioritize substantive, helpful, or insightful contributions
 - Consider the effort and thought put into each response
 - The total allocation should equal ${totalBounty} sats
-- Minimum allocation for included contributors should be 100 sats${customDistribution ? `\n- Focus on the top ${customDistribution} most valuable contributors` : ''}
+- The minimum allocation for any included contributor should be at least 1 sat.${customDistribution ? `\n- Your analysis should focus primarily on identifying the top ${customDistribution} most valuable contributors.` : ''}
+- **Negative Keywords:** Explicitly ignore and assign zero sats to replies consisting solely of simple praise, agreement, or basic questions (e.g., "gm", "this", "great point!", "I agree", "what does that mean?").
+- Prioritize substantive, helpful, or insightful contributions that demonstrably meet the Value Criteria.
+- Consider the effort and thought put into each response.
+
 
 Return your analysis as a JSON object with this exact structure:
 {
@@ -161,12 +166,13 @@ Return your analysis as a JSON object with this exact structure:
       "aiJustification": "why this person deserves this amount (1-2 sentences)"
     }
   ],
-  "reasoning": "overall reasoning for the allocation strategy"
+  "reasoning": "overall reasoning for the allocation strategy.Overall summary of your allocation strategy and why you chose the top contributors."
 }
 
 IMPORTANT: 
 - Only return valid JSON, no other text
 - Include only contributors who genuinely added value
+- **Critical Calculation:** The sum of all \`recommendedSats\` values in the \`contributors\` array **must equal exactly** ${totalBounty}. Double-check your math before responding.
 - Ensure the total sats add up to exactly ${totalBounty}
 - Use the exact pubkey from each reply`;
   }
