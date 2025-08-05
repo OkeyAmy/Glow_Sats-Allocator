@@ -1,143 +1,200 @@
 # Glow: The AI Bounty Allocator
 
-**An AI-powered Nostr mini-app to replace worthless likes with Bitcoin zaps. It analyzes conversations and rewards value, not noise. 🤖⚡️**
+**An AI-powered YakiHonne mini-app that turns scattered zaps into strategic rewards. Glow analyzes conversations and distributes bounties to valuable contributors, not random noise.**
 
 ![Project Preview](public/preview.png)
 
-## Core Philosophy
+## 🎯 Core Philosophy
 
-Glow is built on a few core beliefs:
-1.  **Likes are a worthless metric.** They measure fleeting popularity, not true value, and have created a hollow economy.
-2.  **Substance deserves reward.** In any conversation, a few key contributors provide the most value. This value should be recognized and rewarded economically.
-3.  **Value should be frictionless.** The process of rewarding quality should be as easy as the process of creating it.
+Glow is built on three fundamental beliefs:
 
-Glow is our weapon to enforce these beliefs. It's an AI-powered value engine that uses Google's Gemini AI to analyze Nostr threads, identify the most valuable contributors, and help you reward them with Bitcoin sats. It's designed to supercharge the "zap" economy on platforms like YakiHonne and kill the empty game of vanity metrics.
+1. **Likes are worthless metrics** — They measure fleeting popularity, not true value, creating a hollow engagement economy
+2. **Substance deserves reward** — Key contributors provide the most value in conversations and should be economically recognized
+3. **Value should be frictionless** — Rewarding quality should be as easy as creating it
 
-## The Problem It Solves
+Glow is our solution: an AI-powered value engine using Google's Gemini AI to analyze Nostr threads, identify valuable contributors, and help you reward them with Bitcoin sats. It's designed to supercharge the "zap" economy on platforms like YakiHonne while eliminating vanity metrics.
 
-The current social media model is broken. It creates several critical issues:
+## 🔥 The Problem We're Solving
 
--   **Valuable Content is Buried:** In any active thread, insightful comments are lost in a sea of noise, receiving no economic recognition.
--   **Tipping is Inefficient:** Manually tipping every valuable contributor is a high-friction process that discourages the act of rewarding a community.
--   **Incentives are Misaligned:** The current model rewards the loudest and most frequent voices, not the most insightful ones, leading to a race to the bottom for attention.
+Current social media models create critical issues:
 
-Glow was built to fix this by programmatically linking economic value to intellectual substance.
+- **Valuable content gets buried** — Insightful comments are lost in noise without economic recognition
+- **Tipping is inefficient** — Manual tipping creates friction that discourages community rewards
+- **Incentives are misaligned** — Systems reward the loudest voices, not the most insightful ones
 
-## Key Features in Detail
+Glow fixes this by programmatically linking economic value to intellectual substance.
 
--   **AI-Powered Value Analysis**
-    Glow doesn't just count replies; it understands them. It uses the Google Gemini AI to perform a nuanced analysis of an entire conversation, identifying the specific replies that provided the most insight, constructive feedback, or critical information. It measures merit, not just presence, and provides a justification for its choices, ensuring transparency.
+## ✨ Key Features
 
--   **Community Bounty Distribution**
-    Instead of inefficient 1-to-1 tips, Glow allows a user to post a single "bounty" for an entire thread. The AI then recommends how to split that bounty among all the worthy contributors. This allows for community-scale economic rewards, transforming the act of tipping from a personal gesture into a community-building event.
+### 🧠 AI-Powered Value Analysis
+Glow doesn't just count replies—it understands them. Using Google Gemini AI, it performs nuanced conversation analysis to identify replies that provide the most insight, constructive feedback, or critical information. It measures merit over presence and provides transparent justifications.
 
--   **Total User Control**
-    The AI acts as a trusted advisor, not a dictator. Glow presents its recommendations in a clear interface, but the user has final authority. You can adjust sats amounts, add or remove recipients, and fine-tune the results before any payment is sent. This ensures the AI's objective analysis is guided by and accountable to human oversight.
+### 💰 Community Bounty Distribution
+Replace inefficient 1-to-1 tips with community-scale rewards. Post a single "bounty" for an entire thread, and let AI recommend how to split it among worthy contributors. Transform tipping from personal gestures into community-building events.
 
--   **Frictionless Batch Zaps**
-    Leveraging the WebLN standard, Glow constructs a single batch transaction to pay all recipients at once. This transforms the cumbersome process of sending multiple zaps into a single, seamless click, making the act of rewarding an entire community as easy as liking a single post.
+### 🎛️ Total User Control
+AI acts as your trusted advisor, not dictator. Review recommendations in a clear interface, adjust sat amounts, add or remove recipients, and fine-tune results before any payment. Human oversight guides AI analysis.
 
--   **Engineered Viral Growth Loop**
-    After a bounty is successfully distributed, the app generates a pre-filled Nostr note for sharing. This note is designed for virality: it @-mentions the recipients (driving engagement and notifying them of their reward), announces the bounty amount (social proof), and links back to the app, turning every successful use case into a powerful, authentic marketing event.
+### ⚡ Frictionless Batch Zaps
+Leveraging WebLN standard, Glow constructs single batch transactions to pay all recipients at once. Transform multiple zaps into one seamless click—making community rewards as easy as liking a post.
 
-## How It Works: The Value Funnel
+### 📈 Engineered Viral Growth
+After successful distribution, the app generates pre-filled Nostr notes for sharing. These notes @-mention recipients (driving engagement), announce bounty amounts (social proof), and link back to the app—turning every use case into authentic marketing.
 
-The user workflow is a simple, powerful loop designed to be completed in under 60 seconds.
+## 🔄 How It Works: The Value Funnel
+
+Complete the entire workflow in under 60 seconds:
 
 ```mermaid
-graph TD;
-    subgraph "User Action"
-        A[1. Provide Note ID & Bounty];
-        H{2. Review & Approve};
-        J[4. Share Results];
-    end
-    subgraph "Glow's AI Core"
-        C[Fetch Nostr Thread];
-        D[Format AI Prompt];
-        E[Analyze via Gemini API];
-        F[Return JSON Allocations];
-    end
-    subgraph "Execution"
-        I[3. Batch Zap via WebLN];
-    end
-
-    A --> C --> D --> E --> F --> H;
-    H --> I;
-    I --> J;
+flowchart TD
+    A[🎯 Provide Note ID & Bounty] --> B[🔍 Fetch Nostr Thread]
+    B --> C[🤖 AI Analysis via Gemini]
+    C --> D[📊 Generate Allocations]
+    D --> E{👤 Review & Approve}
+    E -->|✅ Approved| F[⚡ Batch Zap via WebLN]
+    E -->|❌ Edit| G[✏️ Adjust Allocations]
+    G --> E
+    F --> H[📢 Share Results]
+    H --> I[🔁 Viral Loop Complete]
+    
+    style A fill:#e1f5fe
+    style C fill:#f3e5f5
+    style F fill:#e8f5e8
+    style H fill:#fff3e0
 ```
 
-1.  **Initiate:** A user pastes a Nostr note ID and sets a total bounty in sats.
-2.  **Analyze:** Glow fetches the entire conversation and sends it to the Gemini AI for analysis. The AI returns a ranked list of contributors and recommended sats allocations.
-3.  **Approve:** The user reviews the AI's suggestions, makes any desired edits, and approves the batch payment.
-4.  **Distribute:** With a single click, Glow uses WebLN to send the zaps to all recipients.
-5.  **Amplify:** The app encourages the user to share the results, creating a viral loop that brings in the next wave of users.
+### Step-by-Step Process:
 
-## Technical Deep Dive
+1. **Initiate** — Paste a Nostr note ID and set total bounty in sats
+2. **Analyze** — Glow fetches the conversation and sends it to Gemini AI for analysis
+3. **Review** — AI returns ranked contributors with recommended sat allocations
+4. **Approve** — Review suggestions, make edits, and approve batch payment
+5. **Distribute** — Single click sends zaps to all recipients via WebLN
+6. **Amplify** — Share results to create viral growth loop
 
-### Core Architecture
+## 🏗️ Technical Architecture
 
--   **`BountyAllocator.tsx`**: The primary React component that orchestrates the entire UI and user workflow. It manages the application's state, transitioning from the initial input form, through the loading and analysis phase, to the recommendation screen, and finally to the success state.
--   **`nostrService.ts`**: A dedicated module responsible for all communication with the Nostr network. It handles connecting to a list of public relays, subscribing to events, and fetching an entire conversation thread based on a root note ID. Its sole job is to provide clean data to the rest of the application.
--   **`geminiService.ts`**: This module encapsulates all logic for interacting with the Google Gemini API. It takes the raw text from `nostrService`, formats it into a carefully engineered prompt, sends the request to the API, and then parses the resulting JSON response to be used by the `BountyAllocator` component.
+### Core Components
+
+#### `BountyAllocator.tsx`
+Primary React component orchestrating the entire UI and workflow. Manages application state transitions from input form → analysis → recommendations → success state.
+
+#### `nostrService.ts`
+Dedicated module for Nostr network communication. Handles relay connections, event subscriptions, and conversation thread fetching. Provides clean data to the application.
+
+#### `geminiService.ts`
+Encapsulates Google Gemini API logic. Takes raw text from `nostrService`, formats engineered prompts, sends API requests, and parses JSON responses for `BountyAllocator`.
 
 ### AI Prompt Engineering
 
-The quality of the AI's output is determined by the quality of the prompt. We use a structured prompt that instructs the Gemini model to act as an impartial analyst and return a specific JSON schema.
+Quality output requires quality prompts. We use structured prompts instructing Gemini to act as an impartial analyst returning specific JSON schemas:
 
-**Example Prompt Structure:**
-
-```
+```javascript
+const prompt = `
 System: You are an AI assistant analyzing a Nostr thread to determine who provided the most value. Your goal is to recommend a fair allocation of a Bitcoin sats bounty.
 
 Analyze the following conversation:
 ---
-[Formatted conversation data, including user pubkeys and reply content]
+${formattedConversation}
 ---
 
 Rules:
-1. Identify the top 5 most valuable contributors.
-2. For each contributor, provide a brief justification (max 10 words).
-3. Return ONLY a valid JSON array of objects with the fields: `pubkey`, `justification`, `percentage`.
-4. The sum of all `percentage` values must equal 100.
+1. Identify the top 5 most valuable contributors
+2. Provide brief justification for each (max 10 words)
+3. Return ONLY valid JSON array with: pubkey, justification, percentage
+4. All percentage values must sum to 100
+
+Response format:
+[
+  {
+    "pubkey": "npub...",
+    "justification": "Provided key insight",
+    "percentage": 40
+  }
+]
+`;
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/OkeyAmy/sats-allocator.git
-    cd sats-allocator
-    ```
+### Prerequisites
+- Node.js 16+ installed
+- Google Gemini API key ([Get yours here](https://aistudio.google.com/app/apikey))
+- WebLN-compatible Lightning wallet
 
-2.  **Install dependencies:**
-    ```sh
-    npm install
-    ```
+### Installation
 
-3.  **Set up your environment:**
-    This application requires a Google Gemini API key.
-    -   You can get your key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-    -   The app will prompt you to enter this key on first use.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/OkeyAmy/sats-allocator.git
+   cd sats-allocator
+   ```
 
-4.  **Run the development server:**
-    ```sh
-    npm run dev
-    ```
-    This will start the development server, typically at `http://localhost:8080`.
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## Security & Privacy by Design
+3. **Start development server:**
+   ```bash
+   npm run dev
+   ```
+   
+   Server typically runs at `http://localhost:8080`
 
-Security and user privacy are non-negotiable.
--   **Fully Client-Side:** Glow operates entirely within your browser. There is no backend server, which means we never have access to your data.
--   **Non-Custodial:** The app uses WebLN to interact with your *own* Lightning wallet. Your keys and your sats never leave your control.
--   **Secure API Key Storage:** Your Gemini API key is stored exclusively in the browser's `sessionStorage`. This means it is automatically deleted when you close the browser tab, providing a secure balance between convenience and privacy.
+4. **Configure API key:**
+   The app will prompt for your Gemini API key on first use.
 
-## Contributing
+### Build for Production
 
-Contributions are welcome! This project is about building a new economic model for the internet.
+```bash
+npm run build
+npm run preview
+```
 
-1.  Fork the repository.
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+## 🔒 Security & Privacy
+
+Security and privacy are non-negotiable:
+
+- **🌐 Fully Client-Side** — Operates entirely in your browser with no backend server
+- **🔐 Non-Custodial** — Uses WebLN to interact with *your* Lightning wallet—keys never leave your control
+- **🗂️ Secure Storage** — Gemini API key stored in `sessionStorage` only—automatically deleted when tab closes
+- **🚫 Zero Data Collection** — We never access, store, or transmit your personal data
+
+## 🤝 Contributing
+
+Help us build a new economic model for the internet!
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+### Development Guidelines
+
+- Follow existing code style and patterns
+- Add tests for new features
+- Update documentation for API changes
+- Ensure all security practices are maintained
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Google Gemini AI for intelligent conversation analysis
+- Nostr protocol for decentralized social networking
+- WebLN standard for seamless Lightning payments
+- Open source community for inspiration and support
+
+## 📞 Support
+
+- 🐛 [Report Issues](https://github.com/OkeyAmy/sats-allocator/issues)
+- 💬 [Discussions](https://github.com/OkeyAmy/sats-allocator/discussions)
+- 📧 Contact: [https://x.com/okey_amy]
+
+---
+
+*Built with ❤️ for the Bitcoin and Nostr communities*
