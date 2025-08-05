@@ -36,8 +36,8 @@ class GeminiService {
           body: JSON.stringify({
             contents: messages,
             generationConfig: {
-              temperature: 0.33,
-              maxOutputTokens: 250,
+              temperature: 0.25,
+              maxOutputTokens: 100,
             },
             safetySettings: [
               { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
