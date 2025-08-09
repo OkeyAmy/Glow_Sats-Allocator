@@ -125,18 +125,26 @@ const BountyAllocator = () => {
   };
 
   useEffect(() => {
-    // This effect handles application-specific logic after the component mounts.
-    const savedKey = sessionStorage.getItem('gemini_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
+    // Prefer Vite env variable for Gemini API key
+    const envKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+    if (envKey && envKey.trim().length > 0) {
+      setApiKey(envKey.trim());
+      // sessionStorage fallback disabled per request
+      // const savedKey = sessionStorage.getItem('gemini_api_key');
+      // if (savedKey) setApiKey(savedKey);
     } else {
-      setShowApiModal(true);
+      // const savedKey = sessionStorage.getItem('gemini_api_key');
+      // if (savedKey) {
+      //   setApiKey(savedKey);
+      // } else {
+        setShowApiModal(true);
+      // }
     }
   }, []);
 
   const handleApiKeySave = (key: string) => {
     setApiKey(key);
-    sessionStorage.setItem('gemini_api_key', key);
+    // sessionStorage.setItem('gemini_api_key', key); // disabled per request to use .env (Vite) instead of local storage
     setShowApiModal(false);
     toast({
       title: "API Key Saved",

@@ -24,10 +24,14 @@ const ContributorChat: React.FC<ContributorChatProps> = ({
   const [geminiService, setGeminiService] = useState<GeminiService | null>(null);
 
   useEffect(() => {
-    const savedKey = sessionStorage.getItem('gemini_api_key');
-    if (savedKey) {
-      setGeminiService(new GeminiService(savedKey));
+    const envKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+    if (envKey && envKey.trim().length > 0) {
+      setGeminiService(new GeminiService(envKey.trim()));
     }
+    // const savedKey = sessionStorage.getItem('gemini_api_key');
+    // if (savedKey) {
+    //   setGeminiService(new GeminiService(savedKey));
+    // }
     
     // Set initial context for the AI
     const initialContext: ChatMessage = {
