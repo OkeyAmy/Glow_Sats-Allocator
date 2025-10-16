@@ -269,7 +269,11 @@ const BountyAllocator = () => {
       }
 
       // Replace AI-provided contribution text with the original reply content selected by AI
-      const contributorsWithOriginals = replaceContributionsWithOriginals(analysis.contributors, threadReplies);
+      let contributorsWithOriginals = replaceContributionsWithOriginals(analysis.contributors, threadReplies);
+      // Exclude the root author's pubkey from recipients (never reward the original poster)
+      if (originalNote?.pubkey) {
+        contributorsWithOriginals = contributorsWithOriginals.filter(c => c.pubkey !== originalNote.pubkey);
+      }
       setContributors(contributorsWithOriginals);
       setState('recommendations');
       

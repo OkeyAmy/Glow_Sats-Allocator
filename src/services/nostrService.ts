@@ -68,7 +68,7 @@ class NostrService {
       const { id: hexId, relays } = this.processNoteId(noteId);
       const targetRelays = relays && relays.length > 0 ? [...relays, ...RELAYS] : RELAYS;
 
-      // Resolve the true root id for the thread (if input is a reply nevent)
+      // Resolve the true root id for the thread ONLY when the provided id is a reply (has 'root' marker)
       let rootId = hexId;
       try {
         const rootLookup = await this.pool.querySync(targetRelays, {
@@ -80,10 +80,11 @@ class NostrService {
           const ev = rootLookup[0];
           const eTags = (ev.tags || []).filter((t) => t[0] === 'e');
           const tagWithRootMarker = eTags.find((t) => t[3] === 'root');
-          const firstETag = eTags[0];
-          const candidate = tagWithRootMarker?.[1] || firstETag?.[1];
-          if (candidate && /^[a-fA-F0-9]{64}$/.test(candidate)) {
-            rootId = candidate;
+          if (tagWithRootMarker) {
+            const candidate = tagWithRootMarker[1];
+            if (candidate && /^[a-fA-F0-9]{64}$/.test(candidate)) {
+              rootId = candidate;
+            }
           }
         }
       } catch {
