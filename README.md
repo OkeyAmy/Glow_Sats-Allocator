@@ -149,9 +149,9 @@ If a provided identifier points to a reply, we resolve and fetch the thread from
 
 ```mermaid
 flowchart LR
-  UI[React UI\nBountyAllocator] -->|note id + bounty| NostrService
+  UI[BountyAllocator] -->|note id + bounty| NostrService
   NostrService -->|fetch original + replies| Relays[(Nostr Relays)]
-  NostrService -->|formatThreadForAI\n(Pubkey + EventId)| GeminiService
+  NostrService -->|"formatThreadForAI\n(Pubkey + EventId)"| GeminiService
   GeminiService -->|prompt + JSON response| GoogleAI[(Gemini API)]
   GoogleAI -->|contributors JSON| GeminiService
   GeminiService -->|contributors| UI
