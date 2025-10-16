@@ -68,15 +68,38 @@ class NostrService {
       const { id: hexId, relays } = this.processNoteId(noteId);
       const targetRelays = relays && relays.length > 0 ? [...relays, ...RELAYS] : RELAYS;
 
+      // Resolve the true root id for the thread (if input is a reply nevent)
+      let rootId = hexId;
+      try {
+        const rootLookup = await this.pool.querySync(targetRelays, {
+          kinds: [1],
+          ids: [hexId],
+          limit: 1,
+        });
+        if (rootLookup.length > 0) {
+          const ev = rootLookup[0];
+          const eTags = (ev.tags || []).filter((t) => t[0] === 'e');
+          const tagWithRootMarker = eTags.find((t) => t[3] === 'root');
+          const firstETag = eTags[0];
+          const candidate = tagWithRootMarker?.[1] || firstETag?.[1];
+          if (candidate && /^[a-fA-F0-9]{64}$/.test(candidate)) {
+            rootId = candidate;
+          }
+        }
+      } catch {
+        // ignore and use provided id
+      }
+
       // Recursively fetch replies to the root and to replies (nested)
-      const MAX_DEPTH = 3; // fetch direct replies + nested up to depth 2
+      const MAX_DEPTH = 2; // root scan plus one nested depth is often enough; root scan already pulls most
       const PER_QUERY_LIMIT = 500; // per-batch limit
       const MAX_TOTAL = 2000; // safety cap
 
       const seenEventIds = new Set<string>();
       const collected: Event[] = [];
 
-      let currentIds: string[] = [hexId];
+      // Start with the resolved root id
+      let currentIds: string[] = [rootId];
       for (let depth = 0; depth < MAX_DEPTH && currentIds.length > 0 && collected.length < MAX_TOTAL; depth++) {
         // Batch ids to avoid overly large filters
         const nextLevelIds: string[] = [];
@@ -162,6 +185,28 @@ class NostrService {
       if (events.length === 0) return null;
 
       const event = events[0];
+
+      // If this event is a reply, prefer to return its root for top-level display
+      try {
+        const eTags = (event.tags || []).filter((t) => t[0] === 'e');
+        const tagWithRootMarker = eTags.find((t) => t[3] === 'root');
+        const firstETag = eTags[0];
+        const candidateRoot = tagWithRootMarker?.[1] || firstETag?.[1];
+        if (candidateRoot && /^[a-fA-F0-9]{64}$/.test(candidateRoot)) {
+          const rootEvents = await this.pool.querySync(targetRelays, { kinds: [1], ids: [candidateRoot], limit: 1 });
+          if (rootEvents.length > 0) {
+            // Use the root note instead
+            const rootEv = rootEvents[0];
+            event.id = rootEv.id;
+            event.pubkey = rootEv.pubkey;
+            event.content = rootEv.content;
+            event.created_at = rootEv.created_at;
+            event.tags = rootEv.tags;
+          }
+        }
+      } catch {
+        // ignore
+      }
       
       // Get author info
       const authorFilter: Filter = {
