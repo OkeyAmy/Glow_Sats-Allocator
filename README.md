@@ -87,33 +87,14 @@ Encapsulates Google Gemini API logic. Takes raw text from `nostrService`, format
 
 ### AI Prompt Engineering
 
-Quality output requires quality prompts. We use structured prompts instructing Gemini to act as an impartial analyst returning specific JSON schemas:
+The system prompt is optimized for high-precision, JSON-only answers and now asks the AI to return an optional `replyId` for each selected contributor. This lets the UI render the exact original reply text chosen by the AI (no regenerated content). Key constraints:
 
-```javascript
-const prompt = `
-System: You are an AI assistant analyzing a Nostr thread to determine who provided the most value. Your goal is to recommend a fair allocation of a Bitcoin sats bounty.
+- The AI must select only valuable replies based on substantive criteria (problem solving, novelty/insight, constructive argument, data provision).
+- The AI returns contributors as JSON: `name`, `pubkey`, optional `replyId`, `contribution` (raw reply text or concise excerpt), `recommendedSats`, and `aiJustification`.
+- The sum of `recommendedSats` must equal the total bounty.
+- No extra prose outside JSON.
 
-Analyze the following conversation:
----
-${formattedConversation}
----
-
-Rules:
-1. Identify the top 5 most valuable contributors
-2. Provide brief justification for each (max 10 words)
-3. Return ONLY valid JSON array with: pubkey, justification, percentage
-4. All percentage values must sum to 100
-
-Response format:
-[
-  {
-    "pubkey": "npub...",
-    "justification": "Provided key insight",
-    "percentage": 40
-  }
-]
-`;
-```
+We also include for every reply in the prompt both `Pubkey` and `EventId` to make returning `replyId` reliable.
 
 ## 🚀 Getting Started
 
@@ -131,13 +112,14 @@ Response format:
    ```
 
 2. **Install dependencies:**
+   We use pnpm for consistent installs.
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Start development server:**
    ```bash
-   npm run dev
+   pnpm dev
    ```
    
    Server typically runs at `http://localhost:8080`
@@ -148,9 +130,57 @@ Response format:
 ### Build for Production
 
 ```bash
-npm run build
-npm run preview
+pnpm build
+pnpm preview
 ```
+
+## 🧩 Supported Nostr Identifiers
+
+You can input multiple Nostr identifier formats; the app will decode and resolve them:
+
+- `note1...` (nevent for events by id)
+- `nevent1...` (event with embedded relays; we resolve the root when the id is a reply)
+- `naddr1...` (addressed events; we infer the event id or use identifier + relays)
+- 64-char hex ids
+
+If a provided identifier points to a reply, we resolve and fetch the thread from the root event, then include direct and one-level nested replies. Replies are deduplicated across relays.
+
+## 🧱 System Architecture
+
+```mermaid
+flowchart LR
+  UI[React UI\nBountyAllocator] -->|note id + bounty| NostrService
+  NostrService -->|fetch original + replies| Relays[(Nostr Relays)]
+  NostrService -->|formatThreadForAI\n(Pubkey + EventId)| GeminiService
+  GeminiService -->|prompt + JSON response| GoogleAI[(Gemini API)]
+  GoogleAI -->|contributors JSON| GeminiService
+  GeminiService -->|contributors| UI
+  UI -->|map contributors to replies| NostrService
+  UI -->|display original reply text| User
+  UI -->|batch pay via WebLN| Wallet[(Lightning Wallet)]
+```
+
+### Data Flow & Responsibilities
+
+- `BountyAllocator` orchestrates app state and wires services to UI.
+- `nostrService`
+  - Decodes identifiers (`note1`, `nevent1`, `naddr1`, hex)
+  - Resolves root for reply `nevent`s
+  - Fetches replies (direct + nested), dedupes, fetches author profiles
+  - Supplies `formatThreadForAI` including `Pubkey` and `EventId` per reply
+- `geminiService`
+  - Builds strict system prompt (JSON-only, totals must match)
+  - Requests Gemini and parses JSON
+  - Schema supports `replyId` so the exact original reply can be shown
+- UI mapping
+  - Prefer `replyId` to locate the reply event
+  - Fallback: match by `pubkey` and content similarity
+  - Always render original reply content; AI text is not re-used as content
+
+## 🧪 Notes on Accuracy & Limits
+
+- Relay availability varies; counts can differ across clients. We query multiple relays, dedupe events, and limit nested depth for performance. Depth/limits can be tuned if needed.
+- If a thread still shows 0 replies for a known active post, ensure the id resolves to the root or provide the root `note1`/hex id for best results.
 
 ## 🔒 Security & Privacy
 

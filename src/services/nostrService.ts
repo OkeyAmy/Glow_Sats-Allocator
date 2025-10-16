@@ -249,7 +249,8 @@ class NostrService {
       prompt += `Reply ${index + 1}:\n`;
       prompt += `Author: ${reply.author?.display_name || reply.author?.name || 'Anonymous'}\n`;
       prompt += `Content: ${reply.content}\n`;
-      prompt += `Pubkey: ${reply.pubkey}\n\n`;
+      prompt += `Pubkey: ${reply.pubkey}\n`;
+      prompt += `EventId: ${reply.id}\n\n`;
     });
 
     return prompt;
