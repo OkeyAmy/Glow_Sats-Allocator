@@ -49,6 +49,7 @@ const RecommendationScreen = ({
   const totalAllocated = Object.values(allocations).reduce((sum, sats) => sum + sats, 0);
   const isOverAllocated = totalAllocated > totalBounty;
   const hasZeroTotal = totalAllocated === 0;
+  const isUnderAllocated = totalAllocated < totalBounty;
 
   const handleProceed = () => {
     const finalAllocations = Object.entries(allocations)
@@ -177,17 +178,19 @@ const RecommendationScreen = ({
             ))}
           </div>
 
-          {isOverAllocated && (
+          {(isOverAllocated || isUnderAllocated) && (
             <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
               <p className="text-destructive text-sm text-center">
-                Over-allocated by {(totalAllocated - totalBounty).toLocaleString()} sats. Please adjust.
+                {isOverAllocated
+                  ? `Over-allocated by ${(totalAllocated - totalBounty).toLocaleString()} sats. Please adjust.`
+                  : `Under-allocated by ${(totalBounty - totalAllocated).toLocaleString()} sats. Please allocate remaining.`}
               </p>
             </div>
           )}
 
           <Button
             onClick={handleProceed}
-            disabled={isOverAllocated || hasZeroTotal}
+            disabled={isOverAllocated || hasZeroTotal || isUnderAllocated}
             className="w-full h-12 text-base bg-gradient-primary hover:opacity-90"
           >
             Send Payments • {totalAllocated.toLocaleString()} sats to {Object.values(allocations).filter(s => s > 0).length} contributors

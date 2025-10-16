@@ -100,6 +100,8 @@ const BountyAllocator = () => {
   const [paymentVerification, setPaymentVerification] = useState<{[key: string]: 'pending' | 'success' | 'failed'}>({});
   const [isInMiniApp, setIsInMiniApp] = useState<boolean>(false);
   const [webWalletConnected, setWebWalletConnected] = useState<boolean>(false);
+  const [lastPaidTotalSats, setLastPaidTotalSats] = useState<number | null>(null);
+  const [lastPaidRecipientsCount, setLastPaidRecipientsCount] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -296,6 +298,9 @@ const BountyAllocator = () => {
   const handleProceedToPayment = async (finalAllocations: { pubkey: string; sats: number }[]) => {
     try {
       const totalAmount = finalAllocations.reduce((sum, allocation) => sum + allocation.sats, 0);
+      // Track intended totals for accurate success display
+      setLastPaidTotalSats(totalAmount);
+      setLastPaidRecipientsCount(finalAllocations.length);
 
       if (isInMiniApp) {
         // MiniApp flow through YakiHonne
@@ -362,8 +367,13 @@ const BountyAllocator = () => {
             const successfulPayments = Object.entries(paymentVerification).filter(([_, status]) => status === 'success');
             const failedPayments = Object.entries(paymentVerification).filter(([_, status]) => status === 'failed');
 
-            const paidAmount = successfulPayments.length * (totalAmount / finalAllocations.length);
-            setUserBalance(prev => prev - paidAmount);
+            // Compute paid amount based on actual allocated sats per successful recipient
+            const paidAmount = finalAllocations
+              .filter(a => paymentVerification[a.pubkey] === 'success')
+              .reduce((sum, a) => sum + a.sats, 0);
+            if (paidAmount > 0) setUserBalance(prev => prev - paidAmount);
+            setLastPaidTotalSats(paidAmount || totalAmount);
+            setLastPaidRecipientsCount(successfulPayments.length || finalAllocations.length);
 
             toast({
               title: "Payment Processing Complete",
@@ -437,6 +447,12 @@ const BountyAllocator = () => {
             failedPayments.push(allocation.pubkey);
           }
         }
+
+        const paidAmount = finalAllocations
+          .filter(a => successfulPayments.includes(a.pubkey))
+          .reduce((sum, a) => sum + a.sats, 0);
+        setLastPaidTotalSats(paidAmount || totalAmount);
+        setLastPaidRecipientsCount(successfulPayments.length || finalAllocations.length);
 
         toast({
           title: "Payment Processing Complete",
@@ -538,8 +554,8 @@ Powered by AI Tip & Bounty Allocator ⚡`;
       case 'success':
         return (
           <SuccessScreen
-            totalSats={totalBounty}
-            contributorCount={contributors.length}
+            totalSats={lastPaidTotalSats ?? totalBounty}
+            contributorCount={lastPaidRecipientsCount ?? contributors.length}
             onShare={handleShare}
             onReset={() => setState('input')}
           />
