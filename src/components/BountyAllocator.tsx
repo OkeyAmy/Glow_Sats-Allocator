@@ -6,13 +6,73 @@ import LoadingScreen from './LoadingScreen';
 import RecommendationScreen from './RecommendationScreen';
 import SuccessScreen from './SuccessScreen';
 import FaultyTerminal from './FaultyTerminal';
-import { nostrService } from '@/services/nostrService';
+import { nostrService, type NostrNote } from '@/services/nostrService';
 import { GeminiService, type Contributor } from '@/services/geminiService';
 import { walletService } from '@/services/walletService';
 import SWhandler from 'smart-widget-handler';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type AppState = 'input' | 'loading' | 'recommendations' | 'success';
+
+/**
+ * Replace AI 'contribution' summaries with the exact original reply content
+ * from the fetched thread replies, based on pubkey and best text match.
+ */
+function replaceContributionsWithOriginals(
+  contributors: Contributor[],
+  replies: NostrNote[]
+): Contributor[] {
+  const pubkeyToNotes = new Map<string, NostrNote[]>();
+  for (const note of replies) {
+    const list = pubkeyToNotes.get(note.pubkey) || [];
+    list.push(note);
+    pubkeyToNotes.set(note.pubkey, list);
+  }
+
+  const normalize = (text: string): string =>
+    text
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/nostr:[^\s]+/g, '')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const tokenSet = (text: string): Set<string> => new Set(normalize(text).split(' ').filter(Boolean));
+
+  const similarity = (a: string, b: string): number => {
+    const A = tokenSet(a);
+    const B = tokenSet(b);
+    if (A.size === 0 || B.size === 0) return 0;
+    let intersection = 0;
+    for (const t of A) if (B.has(t)) intersection++;
+    return intersection / Math.min(A.size, B.size);
+  };
+
+  return contributors.map((c) => {
+    const notes = pubkeyToNotes.get(c.pubkey);
+    if (!notes || notes.length === 0) return c;
+
+    const target = c.contribution || '';
+    let best: NostrNote | null = null;
+    let bestScore = -1;
+
+    for (const n of notes) {
+      const includesBoost = normalize(n.content).includes(normalize(target)) ? 0.3 : 0;
+      const sim = similarity(n.content, target) + includesBoost;
+      // Prefer more recent when scores tie
+      const score = sim + n.created_at / 1e12; // tiny recency tie-breaker
+      if (score > bestScore) {
+        best = n;
+        bestScore = score;
+      }
+    }
+
+    const chosen = best || notes.sort((a, b) => b.created_at - a.created_at)[0];
+    if (!chosen) return c;
+    return { ...c, contribution: chosen.content };
+  });
+}
 
 const BountyAllocator = () => {
   const [state, setState] = useState<AppState>('input');
@@ -23,6 +83,7 @@ const BountyAllocator = () => {
   const [totalBounty, setTotalBounty] = useState(0);
   const [originalNote, setOriginalNote] = useState<any>(null);
   const [replyCount, setReplyCount] = useState(0);
+  const [replies, setReplies] = useState<NostrNote[]>([]);
   const [initialNoteId, setInitialNoteId] = useState<string>('');
   const [userMetadata, setUserMetadata] = useState<any>(null);
   const [hostOrigin, setHostOrigin] = useState<string>('');
@@ -174,16 +235,17 @@ const BountyAllocator = () => {
       setLoadingStatus('Fetching thread replies...');
       
       // Fetch all replies
-      const replies = await nostrService.fetchThreadReplies(noteId);
-      if (replies.length === 0) {
+      const threadReplies = await nostrService.fetchThreadReplies(noteId);
+      if (threadReplies.length === 0) {
         throw new Error('No replies found for this thread. This could be due to relay issues or a thread with no engagement.');
       }
-      setReplyCount(replies.length);
+      setReplyCount(threadReplies.length);
+      setReplies(threadReplies);
 
       setLoadingStatus(`Found ${replies.length} replies. AI is analyzing the conversation...`);
       
       // Format for AI analysis
-      const threadContent = nostrService.formatThreadForAI(originalNote, replies);
+      const threadContent = nostrService.formatThreadForAI(originalNote, threadReplies);
       
       // Analyze with Gemini
       const geminiService = new GeminiService(apiKey);
@@ -197,7 +259,9 @@ const BountyAllocator = () => {
         throw new Error('No valuable contributions found in this thread');
       }
 
-      setContributors(analysis.contributors);
+      // Replace AI-provided contribution text with the original reply content selected by AI
+      const contributorsWithOriginals = replaceContributionsWithOriginals(analysis.contributors, threadReplies);
+      setContributors(contributorsWithOriginals);
       setState('recommendations');
       
       toast({
