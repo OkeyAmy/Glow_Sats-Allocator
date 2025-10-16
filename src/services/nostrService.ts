@@ -67,35 +67,71 @@ class NostrService {
     try {
       const { id: hexId, relays } = this.processNoteId(noteId);
       const targetRelays = relays && relays.length > 0 ? [...relays, ...RELAYS] : RELAYS;
-      
-      const filter: Filter = {
-        kinds: [1],
-        '#e': [hexId],
-        limit: 100
-      };
 
-      const events = await this.pool.querySync(targetRelays, filter);
-      
+      // Recursively fetch replies to the root and to replies (nested)
+      const MAX_DEPTH = 3; // fetch direct replies + nested up to depth 2
+      const PER_QUERY_LIMIT = 500; // per-batch limit
+      const MAX_TOTAL = 2000; // safety cap
+
+      const seenEventIds = new Set<string>();
+      const collected: Event[] = [];
+
+      let currentIds: string[] = [hexId];
+      for (let depth = 0; depth < MAX_DEPTH && currentIds.length > 0 && collected.length < MAX_TOTAL; depth++) {
+        // Batch ids to avoid overly large filters
+        const nextLevelIds: string[] = [];
+
+        const batches: string[][] = [];
+        const BATCH_SIZE = 150;
+        for (let i = 0; i < currentIds.length; i += BATCH_SIZE) {
+          batches.push(currentIds.slice(i, i + BATCH_SIZE));
+        }
+
+        for (const batch of batches) {
+          const filter: Filter = {
+            kinds: [1],
+            '#e': batch,
+            limit: PER_QUERY_LIMIT,
+          };
+
+          const events = await this.pool.querySync(targetRelays, filter);
+
+          for (const ev of events) {
+            if (!seenEventIds.has(ev.id)) {
+              seenEventIds.add(ev.id);
+              collected.push(ev);
+              // Queue this event id to find replies to it in the next depth
+              nextLevelIds.push(ev.id);
+              if (collected.length >= MAX_TOTAL) break;
+            }
+          }
+
+          if (collected.length >= MAX_TOTAL) break;
+        }
+
+        currentIds = nextLevelIds;
+      }
+
       // Get unique pubkeys for author info
-      const uniquePubkeys = [...new Set(events.map(e => e.pubkey))];
+      const uniquePubkeys = [...new Set(collected.map(e => e.pubkey))];
       const authorFilter: Filter = {
         kinds: [0],
         authors: uniquePubkeys
       };
 
       const authorEvents = await this.pool.querySync(RELAYS, authorFilter);
-      const authorMap = new Map();
-      
+      const authorMap = new Map<string, any>();
+
       authorEvents.forEach(event => {
         try {
           const profile = JSON.parse(event.content);
           authorMap.set(event.pubkey, profile);
-        } catch (e) {
+        } catch {
           // Ignore malformed profiles
         }
       });
 
-      const notes: NostrNote[] = events
+      const notes: NostrNote[] = collected
         .sort((a, b) => b.created_at - a.created_at)
         .map(event => ({
           id: event.id,
