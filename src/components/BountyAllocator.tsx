@@ -49,9 +49,18 @@ function replaceContributionsWithOriginals(
     return intersection / Math.min(A.size, B.size);
   };
 
+  const idToNote = new Map<string, NostrNote>();
+  for (const n of replies) idToNote.set(n.id, n);
+
   return contributors.map((c) => {
     const notes = pubkeyToNotes.get(c.pubkey);
     if (!notes || notes.length === 0) return c;
+
+    // Prefer exact replyId chosen by AI if provided
+    if (c.replyId && idToNote.has(c.replyId)) {
+      const exact = idToNote.get(c.replyId)!;
+      return { ...c, contribution: exact.content };
+    }
 
     const target = c.contribution || '';
     let best: NostrNote | null = null;

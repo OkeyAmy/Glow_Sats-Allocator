@@ -1,6 +1,7 @@
 interface Contributor {
   name: string;
   pubkey: string;
+  replyId?: string;
   contribution: string;
   recommendedSats: number;
   aiJustification: string;
@@ -155,13 +156,14 @@ Instructions:
 - Consider the effort and thought put into each response.
 
 
-Return your analysis as a JSON object with this exact structure:
+Return your analysis as a JSON object with this exact structure (include replyId when possible):
 {
   "contributors": [
     {
       "name": "Author display name or 'Anonymous'",
       "pubkey": "full pubkey from the reply",
-      "contribution": "brief description of their contribution(must be the raw reply. For links or any long word emebd them into shorter text for example "nostr:nevent1qqsvaut2vxl5x5l2t95e7e25dnw3vl4668tmmy0t6726eyu8w4tcptsp9dmhxue69uhhyet" should now be written like this "nostr... thank")",
+      "replyId": "hex event id of the selected reply (if known)",
+      "contribution": "raw reply text (or concise version; do not invent)",
       "recommendedSats": number,
       "aiJustification": "why this person deserves this amount (1-2 sentences)"
     }
